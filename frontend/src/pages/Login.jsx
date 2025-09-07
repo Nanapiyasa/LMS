@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebaseConfig"; // import your firebase.js config
+import { signIn } from "../utils/supabaseHelpers";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
@@ -14,10 +13,12 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("✅ Logged in:", userCredential.user);
-      navigate("/dashboard"); // redirect after login
+      const { user, session } = await signIn(email, password);
+      console.log("Logged in:", user);
+      // The App component will handle routing based on user role
+      // No need to navigate manually as the auth state change will trigger routing
     } catch (err) {
+      console.error("Login error:", err);
       setError("Invalid credentials. Please try again.");
     }
   };
@@ -81,15 +82,5 @@ export default function Login() {
       </motion.div>
     </div>
   );
-
-  signInWithEmailAndPassword(auth, email, password)
-  .then((userCredential) => {
-    console.log("Login successful:", userCredential.user);
-    navigate("/dashboard"); // or your role-based route
-  })
-  .catch((error) => {
-    console.error("Login failed:", error.code, error.message);
-    alert(error.message);
-  });
 
 }
