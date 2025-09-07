@@ -240,3 +240,5 @@ Remove these Firebase-related files:
 4. **Cost Effective**: More predictable pricing model
 5. **Open Source**: Self-hostable if needed
 6. **Better Developer Experience**: More intuitive API and better tooling -->
+
+

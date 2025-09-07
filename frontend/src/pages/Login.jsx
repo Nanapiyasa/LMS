@@ -1,86 +1,153 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { signIn } from "../utils/supabaseHelpers";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseConfig";
+import "./Login.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
-      const { user, session } = await signIn(email, password);
-      console.log("Logged in:", user);
-      // The App component will handle routing based on user role
-      // No need to navigate manually as the auth state change will trigger routing
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (data?.user) {
+        // Navigate to root; App.jsx will pick up session and route by role
+        navigate("/");
+      }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Invalid credentials. Please try again.");
+      setError(err?.message || "Invalid credentials. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg"
-      >
-        <h1 className="mb-6 text-center text-3xl font-bold text-gray-800">Welcome Back</h1>
-        <p className="mb-6 text-center text-gray-500">Sign in to your LMS dashboard</p>
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-5">
+    <div className="login-page">
+      <div className="login-left">
+        <div className="decor-1"></div>
+        <div className="decor-2"></div>
+        <div className="decor-3"></div>
+        <div className="hero">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <h1 className="hero-title">WELCOME</h1>
+            <h2 className="hero-subtitle">Nanapiyasa</h2>
+            <LogoSlider />
+            <p className="hero-text">
+              Access your personalized learning dashboard, track progress, and continue your educational journey with our comprehensive learning management system.
+            </p>
           </div>
+        </div>
+      </div>
+
+      <div className="login-right">
+        <div className="login-card">
+          <div className="login-header">
+            <h3 className="login-title">Sign in</h3>
+            <p className="login-subtitle">Enter your email and password to access your account</p>
+          </div>
+
+          {error && (
+            <div className="alert alert-error">{error}</div>
+          )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <input
-              type="password"
-              className="mt-1 w-full rounded-lg border border-gray-300 p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="form-field">
+              <label className="form-label">User Name</label>
+              <input
+                type="email"
+                className="form-input"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-input"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button onClick={handleLogin} className="submit-button">Sign In</button>
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white shadow-md transition hover:bg-indigo-700"
-          >
-            Sign In
-          </button>
-        </form>
+          <div className="login-footer">
+            <p>
+              Don't have an account? <a href="#">Sign up</a>
+            </p>
+          </div>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Forgot your password?{" "}
-          <a href="#" className="text-indigo-600 hover:underline">
-            Reset here
-          </a>
-        </p>
-      </motion.div>
+          <div className="mobile-welcome">
+            <h2 className="login-title" style={{ fontSize: 18 }}>Welcome to Your Learning Platform</h2>
+            <p className="login-subtitle">Access your personalized dashboard and continue learning</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
+}
 
+function LogoSlider() {
+  const images = useMemo(() => [
+    "/logo.png",
+    "/logo2.jpeg",
+    "/vite.svg",
+  ], []);
+
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 2500);
+    return () => clearInterval(id);
+  }, [images.length]);
+
+  return (
+    <div className="hero-logo-slider" aria-label="logo carousel">
+      {images.map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt="Logo"
+          className={i === index ? "active" : ""}
+          onError={(e) => {
+            const el = e.currentTarget;
+            const triedStr = el.getAttribute("data-tried") || "0";
+            const tried = parseInt(triedStr, 10) || 0;
+            const base = src.replace(/\.(png|jpe?g|svg)$/i, "");
+            const fallbacks = [`${base}.jpg`, `${base}.png`, "/vite.svg"]; 
+            if (tried < fallbacks.length) {
+              el.setAttribute("data-tried", String(tried + 1));
+              el.src = fallbacks[tried];
+            } else {
+              el.style.display = "none";
+            }
+          }}
+        />
+      ))}
+    </div>
+  );
 }
