@@ -46,8 +46,47 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login is handled on frontend with Supabase Auth SDK
-// You can create protected routes using JWT tokens
+// Login endpoint using Supabase Auth
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Sign in with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      return res.status(401).json({ error: authError.message });
+    }
+
+    // Get user data from users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (userError || !userData) {
+      return res.status(404).json({ error: "User profile not found" });
+    }
+
+    res.json({
+      user: userData,
+      session: authData.session,
+      message: "Login successful"
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get user profile by ID
 router.get("/profile/:uid", async (req, res) => {
   try {
     const { data: userData, error } = await supabase
