@@ -6,6 +6,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import LifeSkills from "./pages/LifeSkills";
+import JobRoleSimulation from "./pages/JobRoleSimulation";
+import CommunicationSocial from "./pages/CommunicationSocial";
+import BehaviourEmotional from "./pages/BehaviourEmotional";
 import ParentDashboard from "./pages/ParentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
@@ -26,7 +30,13 @@ function App() {
           } />
           <Route path="/student/*" element={
             <ProtectedRoute requiredRole="student">
-              <StudentDashboard />
+              <Routes>
+                <Route path="" element={<StudentDashboard />} />
+                <Route path="life-skills" element={<LifeSkills />} />
+                <Route path="job-role-simulation" element={<JobRoleSimulation />} />
+                <Route path="communication-social" element={<CommunicationSocial />} />
+                <Route path="behaviour-emotional" element={<BehaviourEmotional />} />
+              </Routes>
             </ProtectedRoute>
           } />
           <Route path="/teacher/*" element={

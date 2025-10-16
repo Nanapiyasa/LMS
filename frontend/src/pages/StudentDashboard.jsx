@@ -1,36 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Mail, Bell } from 'lucide-react';
+import { Gamepad2, Brain, Users, Briefcase } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function StudentDashboard() {
   const { user, userData, logout } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({
-    days: 45,
-    hours: 12,
-    minutes: 30,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const modules = [
+    {
+      key: 'life-skills',
+      title: 'Life Skills Module',
+      description: 'Practice daily living and decision-making skills.',
+      bg: '#ECFDF5',
+      accent: '#059669',
+      icon: Brain
+    },
+    {
+      key: 'job-role-simulation',
+      title: 'Job Role Simulation Module',
+      description: 'Experience real-world job tasks in a safe space.',
+      bg: '#EFF6FF',
+      accent: '#2563EB',
+      icon: Briefcase
+    },
+    {
+      key: 'communication-social',
+      title: 'Communication and Social Skills Module',
+      description: 'Improve conversations, cues, and teamwork.',
+      bg: '#FAF5FF',
+      accent: '#7C3AED',
+      icon: Users
+    },
+    {
+      key: 'behaviour-emotional',
+      title: 'Behaviour and Emotional Regulation Module',
+      description: 'Build self-regulation and coping strategies.',
+      bg: '#FFF7ED',
+      accent: '#EA580C',
+      icon: Gamepad2
+    }
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,14 +55,17 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: '#F9FAFB' }}
+    >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse top-0 left-0"></div>
         <div className="absolute w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse bottom-0 right-0 animation-delay-2000"></div>
       </div>
 
-      <div className="max-w-4xl w-full relative z-10">
+      <div className="max-w-6xl w-full relative z-10">
         {/* User info and logout */}
         <div className="mb-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-2">
@@ -66,87 +80,38 @@ export default function StudentDashboard() {
           </button>
         </div>
         <div className="text-center space-y-8">
-          {/* Icon */}
-          <div className="flex justify-center">
-            <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-full p-6 border border-white border-opacity-20">
-              <Clock className="w-16 h-16 text-white" />
-            </div>
+          <div className="space-y-2">
+            <div className="mx-auto w-full h-px rounded-full" style={{ background: '#E5E7EB' }}></div>
+            <h1 className="text-4xl md:text-5xl font-bold" style={{ color: '#111827' }}>Choose Your Module</h1>
+            <p style={{ color: '#4B5563' }}>Pick a learning game to start your session</p>
           </div>
 
-          {/* Main heading */}
-          <div className="space-y-4">
-            <h1 className="text-6xl md:text-8xl font-bold text-white tracking-tight">
-              Coming Soon
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-200 max-w-2xl mx-auto">
-              Something amazing is on the way. Get ready for an experience like no other.
-            </p>
-          </div>
-
-          {/* Countdown timer */}
-          <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto">
-            {[
-              { label: 'Days', value: timeLeft.days },
-              { label: 'Hours', value: timeLeft.hours },
-              { label: 'Minutes', value: timeLeft.minutes },
-              { label: 'Seconds', value: timeLeft.seconds }
-            ].map((item, i) => (
-              <div key={i} className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-6 border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300">
-                <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                  {String(item.value).padStart(2, '0')}
-                </div>
-                <div className="text-sm md:text-base text-blue-200 uppercase tracking-wider">
-                  {item.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Email subscription */}
-          <div className="max-w-md mx-auto">
-            {!subscribed ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-10 backdrop-blur-lg border border-white border-opacity-20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
-                  >
-                    <Bell className="w-5 h-5" />
-                    Notify Me
-                  </button>
-                </div>
-                <p className="text-sm text-blue-200">
-                  Be the first to know when we launch
-                </p>
-              </form>
-            ) : (
-              <div className="bg-green-500 bg-opacity-20 backdrop-blur-lg border border-green-400 border-opacity-30 rounded-xl p-6 animate-pulse">
-                <p className="text-white font-semibold text-lg">
-                  🎉 Thank you! You'll be notified when we launch.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Social links placeholder */}
-          <div className="flex justify-center gap-6 pt-8">
-            {['Twitter', 'Facebook', 'Instagram'].map((social, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {modules.map(({ key, title, description, bg, accent, icon: Icon }) => (
               <button
-                key={i}
-                className="w-12 h-12 bg-white bg-opacity-10 backdrop-blur-lg rounded-full border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center text-white hover:scale-110 transform"
+                key={key}
+                onClick={() => navigate(`/student/${key}`)}
+                className={`group relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-200`}
+                style={{
+                  background: bg,
+                  color: '#111827',
+                  border: `1px solid ${accent}26`,
+                  boxShadow: '0 4px 12px rgba(17,24,39,0.06)'
+                }}
               >
-                {social[0]}
+                <div className="relative flex flex-col gap-3">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ background: '#FFFFFF', border: `1px solid ${accent}26` }}
+                  >
+                    <Icon className="w-6 h-6" style={{ color: accent }} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg leading-tight" style={{ color: '#111827' }}>{title}</h3>
+                    <p className="text-sm mt-1" style={{ color: '#374151' }}>{description}</p>
+                  </div>
+                  <div className="mt-auto pt-2 text-sm" style={{ color: accent }}>Start ▶</div>
+                </div>
               </button>
             ))}
           </div>
