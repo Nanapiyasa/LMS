@@ -13,6 +13,7 @@ import BehaviourEmotional from "./pages/BehaviourEmotional";
 import ParentDashboard from "./pages/ParentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import CSSDebugTest from "./pages/CSSDebugTest";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
+          <Route path="/css-debug" element={<CSSDebugTest />} />
           <Route path="/student/*" element={
             <ProtectedRoute requiredRole="student">
               <Routes>
