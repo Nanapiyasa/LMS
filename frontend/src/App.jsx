@@ -9,7 +9,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import LifeSkills from "./pages/LifeSkills/LifeSkills";
 import JobRoleSimulation from "./pages/JobRoleSimulation/JobRoleSimulation";
 import CommunicationSocial from "./pages/CommunicationSocial/CommunicationSocial";
-import BehaviourEmotional from "./pages/BehaviourEmotional/Level_1_Emotion_Match_Game";
+import BehaviourEmotional from "./pages/BehaviourEmotional/Level_2_Emotion_Match_Game";
 import ParentDashboard from "./pages/ParentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
