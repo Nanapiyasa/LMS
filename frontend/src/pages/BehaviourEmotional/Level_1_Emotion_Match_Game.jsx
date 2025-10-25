@@ -63,48 +63,52 @@ export default function App() {
   // AUDIO FEEDBACK (Web Audio API)
   // ============================================================================
   const playSound = (type) => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        window.webkitAudioContext)();
-    }
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext ||
+          window.webkitAudioContext)();
+      }
 
-    const ctx = audioContextRef.current;
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+      const ctx = audioContextRef.current;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
-    if (type === "correct") {
-      // Happy ascending tones
-      oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-      oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-      oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.4);
-    } else if (type === "wrong") {
-      // Gentle downward tone
-      oscillator.frequency.setValueAtTime(400, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(
-        200,
-        ctx.currentTime + 0.3
-      );
-      gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.3);
-    } else if (type === "complete") {
-      // Celebration fanfare
-      oscillator.frequency.setValueAtTime(523.25, ctx.currentTime);
-      oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
-      oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.3);
-      oscillator.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.45);
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.7);
+      if (type === "correct") {
+        // Happy ascending tones
+        oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+        oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.4);
+      } else if (type === "wrong") {
+        // Gentle downward tone
+        oscillator.frequency.setValueAtTime(400, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          200,
+          ctx.currentTime + 0.3
+        );
+        gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.3);
+      } else if (type === "complete") {
+        // Celebration fanfare
+        oscillator.frequency.setValueAtTime(523.25, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
+        oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.3);
+        oscillator.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.45);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.7);
+      }
+    } catch (error) {
+      console.log("Audio not available:", error);
     }
   };
 
@@ -112,13 +116,17 @@ export default function App() {
   // VOICE NARRATION (Speech Synthesis)
   // ============================================================================
   const speak = (text) => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1.1;
-      utterance.volume = 0.8;
-      window.speechSynthesis.speak(utterance);
+    try {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (error) {
+      console.log("Speech synthesis not available:", error);
     }
   };
 
@@ -249,28 +257,239 @@ export default function App() {
   };
 
   // ============================================================================
+  // INLINE STYLES
+  // ============================================================================
+  const getContainerStyle = () => ({
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    padding: "20px",
+    fontFamily: "'Comic Sans MS', 'Arial Rounded MT Bold', cursive, sans-serif",
+    position: "relative",
+    overflow: "hidden",
+    boxSizing: "border-box",
+  });
+
+  const getConfettiCanvasStyle = () => ({
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+    zIndex: 1000,
+  });
+
+  const getHeaderStyle = () => ({
+    textAlign: "center",
+    marginBottom: "20px",
+  });
+
+  const getTitleStyle = () => ({
+    fontSize: "3rem",
+    color: "#fff",
+    textShadow: "4px 4px 8px rgba(0,0,0,0.3)",
+    margin: "10px 0",
+  });
+
+  const getScoreBoardStyle = () => ({
+    fontSize: "2rem",
+    color: "#FFD700",
+    fontWeight: "bold",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: "10px 30px",
+    borderRadius: "30px",
+    display: "inline-block",
+    textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
+  });
+
+  const getInstructionsStyle = () => ({
+    textAlign: "center",
+    marginBottom: "20px",
+  });
+
+  const getInstructionTextStyle = () => ({
+    fontSize: "1.5rem",
+    color: "#fff",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    padding: "15px 30px",
+    borderRadius: "20px",
+    display: "inline-block",
+    fontWeight: "bold",
+  });
+
+  const getFeedbackBoxStyle = () => ({
+    textAlign: "center",
+    marginBottom: "20px",
+  });
+
+  const getFeedbackTextStyle = () => ({
+    fontSize: "2rem",
+    color: "#fff",
+    backgroundColor: "rgba(255,215,0,0.9)",
+    padding: "20px 40px",
+    borderRadius: "25px",
+    display: "inline-block",
+    fontWeight: "bold",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+  });
+
+  const getFaceCardsContainerStyle = () => ({
+    display: "flex",
+    justifyContent: "center",
+    gap: "30px",
+    marginBottom: "50px",
+    flexWrap: "wrap",
+  });
+
+  const getFaceCardStyle = (emotion) => ({
+    width: "150px",
+    height: "150px",
+    borderRadius: "20px",
+    border: `6px solid ${emotion.color}`,
+    backgroundColor: emotion.bgColor,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "6rem",
+    transition: "all 0.3s ease",
+    cursor: matchedCards.includes(emotion.id) ? "not-allowed" : "pointer",
+    touchAction: "manipulation",
+    userSelect: "none",
+    opacity: matchedCards.includes(emotion.id) ? 0.3 : 1,
+    transform: selectedCard?.id === emotion.id ? "scale(1.1)" : "scale(1)",
+    boxShadow:
+      selectedCard?.id === emotion.id
+        ? `0 0 30px ${emotion.color}`
+        : "0 8px 20px rgba(0,0,0,0.2)",
+  });
+
+  const getTargetsContainerStyle = () => ({
+    display: "flex",
+    justifyContent: "center",
+    gap: "30px",
+    flexWrap: "wrap",
+    maxWidth: "800px",
+    margin: "0 auto",
+  });
+
+  const getTargetBubbleStyle = (emotion) => ({
+    width: "180px",
+    height: "180px",
+    borderRadius: "50%",
+    border: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "2rem",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
+    transition: "all 0.3s ease",
+    cursor:
+      !selectedCard || matchedCards.includes(emotion.id)
+        ? "not-allowed"
+        : "pointer",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+    position: "relative",
+    touchAction: "manipulation",
+    userSelect: "none",
+    backgroundColor: emotion.color,
+    opacity: matchedCards.includes(emotion.id) ? 0.3 : 1,
+    animation: wrongChoice === emotion.id ? "shake 0.5s" : "none",
+  });
+
+  const getCheckMarkStyle = () => ({
+    position: "absolute",
+    top: "10px",
+    right: "10px",
+    fontSize: "3rem",
+    color: "#fff",
+    textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+  });
+
+  const getCompleteScreenStyle = () => ({
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0,0,0,0.8)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 999,
+  });
+
+  const getCompleteContentStyle = () => ({
+    backgroundColor: "#fff",
+    padding: "50px",
+    borderRadius: "30px",
+    textAlign: "center",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+  });
+
+  const getStarContainerStyle = () => ({
+    fontSize: "5rem",
+    marginBottom: "20px",
+  });
+
+  const getBigStarStyle = () => ({
+    display: "inline-block",
+    margin: "0 10px",
+  });
+
+  const getCompleteTitleStyle = () => ({
+    fontSize: "4rem",
+    color: "#FF6347",
+    marginBottom: "20px",
+    textShadow: "3px 3px 6px rgba(0,0,0,0.2)",
+  });
+
+  const getCompleteScoreStyle = () => ({
+    fontSize: "2.5rem",
+    color: "#667eea",
+    marginBottom: "30px",
+    fontWeight: "bold",
+  });
+
+  const getPlayAgainButtonStyle = () => ({
+    fontSize: "2rem",
+    padding: "20px 60px",
+    backgroundColor: "#32CD32",
+    color: "#fff",
+    border: "none",
+    borderRadius: "50px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+    transition: "all 0.3s ease",
+    touchAction: "manipulation",
+    fontFamily: "inherit",
+  });
+
+  // ============================================================================
   // RENDER
   // ============================================================================
   return (
-    <div style={styles.container}>
+    <div style={getContainerStyle()}>
       {/* Confetti Canvas */}
       {showConfetti && (
-        <canvas ref={confettiCanvasRef} style={styles.confettiCanvas} />
+        <canvas ref={confettiCanvasRef} style={getConfettiCanvasStyle()} />
       )}
 
       {/* Game Complete Screen */}
       {gameComplete && (
-        <div style={styles.completeScreen}>
-          <div style={styles.completeContent}>
-            <div style={styles.starContainer}>
-              <span style={styles.bigStar}>⭐</span>
-              <span style={styles.bigStar}>🌟</span>
-              <span style={styles.bigStar}>⭐</span>
+        <div style={getCompleteScreenStyle()}>
+          <div style={getCompleteContentStyle()}>
+            <div style={getStarContainerStyle()}>
+              <span style={getBigStarStyle()}>⭐</span>
+              <span style={getBigStarStyle()}>🌟</span>
+              <span style={getBigStarStyle()}>⭐</span>
             </div>
-            <h1 style={styles.completeTitle}>YOU DID IT!</h1>
-            <p style={styles.completeScore}>Score: {score} points!</p>
+            <h1 style={getCompleteTitleStyle()}>YOU DID IT!</h1>
+            <p style={getCompleteScoreStyle()}>Score: {score} points!</p>
             <button
-              style={styles.playAgainButton}
+              style={getPlayAgainButtonStyle()}
               onClick={() => {
                 initializeGame();
                 speak("Let's play again!");
@@ -286,74 +505,51 @@ export default function App() {
       {!gameComplete && (
         <>
           {/* Header */}
-          <header style={styles.header}>
-            <h1 style={styles.title}>🎨 Emotion Match Game 🎨</h1>
-            <div style={styles.scoreBoard}>Score: {score}</div>
+          <header style={getHeaderStyle()}>
+            <h1 style={getTitleStyle()}>🎨 Emotion Match Game 🎨</h1>
+            <div style={getScoreBoardStyle()}>Score: {score}</div>
           </header>
 
           {/* Instructions */}
-          <div style={styles.instructions}>
-            <p style={styles.instructionText}>
+          <div style={getInstructionsStyle()}>
+            <p style={getInstructionTextStyle()}>
               👆 Click a face, then click its matching feeling bubble! 👆
             </p>
           </div>
 
           {/* Feedback Message */}
           {feedback && (
-            <div style={styles.feedbackBox}>
-              <p style={styles.feedbackText}>{feedback}</p>
+            <div style={getFeedbackBoxStyle()}>
+              <p style={getFeedbackTextStyle()}>{feedback}</p>
             </div>
           )}
 
           {/* Face Cards Section */}
-          <div style={styles.faceCardsContainer}>
+          <div style={getFaceCardsContainerStyle()}>
             {faceCards.map((emotion) => (
               <button
                 key={emotion.id}
-                style={{
-                  ...styles.faceCard,
-                  backgroundColor: emotion.bgColor,
-                  borderColor: emotion.color,
-                  opacity: matchedCards.includes(emotion.id) ? 0.3 : 1,
-                  transform:
-                    selectedCard?.id === emotion.id ? "scale(1.1)" : "scale(1)",
-                  boxShadow:
-                    selectedCard?.id === emotion.id
-                      ? `0 0 30px ${emotion.color}`
-                      : "0 8px 20px rgba(0,0,0,0.2)",
-                  cursor: matchedCards.includes(emotion.id)
-                    ? "not-allowed"
-                    : "pointer",
-                }}
+                style={getFaceCardStyle(emotion)}
                 onClick={() => handleCardClick(emotion)}
                 disabled={matchedCards.includes(emotion.id)}
               >
-                <span style={styles.emoji}>{emotion.emoji}</span>
+                <span style={{ pointerEvents: "none" }}>{emotion.emoji}</span>
               </button>
             ))}
           </div>
 
           {/* Target Bubbles Section */}
-          <div style={styles.targetsContainer}>
+          <div style={getTargetsContainerStyle()}>
             {EMOTIONS.map((emotion) => (
               <button
                 key={emotion.id}
-                style={{
-                  ...styles.targetBubble,
-                  backgroundColor: emotion.color,
-                  opacity: matchedCards.includes(emotion.id) ? 0.3 : 1,
-                  animation: wrongChoice === emotion.id ? "shake 0.5s" : "none",
-                  cursor:
-                    !selectedCard || matchedCards.includes(emotion.id)
-                      ? "not-allowed"
-                      : "pointer",
-                }}
+                style={getTargetBubbleStyle(emotion)}
                 onClick={() => handleTargetClick(emotion)}
                 disabled={!selectedCard || matchedCards.includes(emotion.id)}
               >
-                <span style={styles.targetText}>{emotion.name}</span>
+                <span style={{ pointerEvents: "none" }}>{emotion.name}</span>
                 {matchedCards.includes(emotion.id) && (
-                  <span style={styles.checkMark}>✓</span>
+                  <span style={getCheckMarkStyle()}>✓</span>
                 )}
               </button>
             ))}
@@ -369,200 +565,10 @@ export default function App() {
           75% { transform: translateX(10px); }
         }
         
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
+        * {
+          box-sizing: border-box;
         }
       `}</style>
     </div>
   );
 }
-
-// ============================================================================
-// STYLES (CSS-in-JS)
-// ============================================================================
-const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    padding: "20px",
-    fontFamily: "'Comic Sans MS', 'Arial Rounded MT Bold', cursive, sans-serif",
-    position: "relative",
-    overflow: "hidden",
-  },
-  confettiCanvas: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    pointerEvents: "none",
-    zIndex: 1000,
-  },
-  header: {
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  title: {
-    fontSize: "3rem",
-    color: "#fff",
-    textShadow: "4px 4px 8px rgba(0,0,0,0.3)",
-    margin: "10px 0",
-    animation: "pulse 2s infinite",
-  },
-  scoreBoard: {
-    fontSize: "2rem",
-    color: "#FFD700",
-    fontWeight: "bold",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: "10px 30px",
-    borderRadius: "30px",
-    display: "inline-block",
-    textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
-  },
-  instructions: {
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  instructionText: {
-    fontSize: "1.5rem",
-    color: "#fff",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    padding: "15px 30px",
-    borderRadius: "20px",
-    display: "inline-block",
-    fontWeight: "bold",
-  },
-  feedbackBox: {
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  feedbackText: {
-    fontSize: "2rem",
-    color: "#fff",
-    backgroundColor: "rgba(255,215,0,0.9)",
-    padding: "20px 40px",
-    borderRadius: "25px",
-    display: "inline-block",
-    fontWeight: "bold",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-    animation: "pulse 0.5s",
-  },
-  faceCardsContainer: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "30px",
-    marginBottom: "50px",
-    flexWrap: "wrap",
-  },
-  faceCard: {
-    width: "150px",
-    height: "150px",
-    borderRadius: "20px",
-    border: "6px solid",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "6rem",
-    transition: "all 0.3s ease",
-    cursor: "pointer",
-    touchAction: "manipulation",
-    userSelect: "none",
-  },
-  emoji: {
-    pointerEvents: "none",
-  },
-  targetsContainer: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "30px",
-    flexWrap: "wrap",
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-  targetBubble: {
-    width: "180px",
-    height: "180px",
-    borderRadius: "50%",
-    border: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "2rem",
-    fontWeight: "bold",
-    color: "#fff",
-    textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
-    transition: "all 0.3s ease",
-    cursor: "pointer",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-    position: "relative",
-    touchAction: "manipulation",
-    userSelect: "none",
-  },
-  targetText: {
-    pointerEvents: "none",
-  },
-  checkMark: {
-    position: "absolute",
-    top: "10px",
-    right: "10px",
-    fontSize: "3rem",
-    color: "#fff",
-    textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
-  },
-  completeScreen: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0,0,0,0.8)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 999,
-  },
-  completeContent: {
-    backgroundColor: "#fff",
-    padding: "50px",
-    borderRadius: "30px",
-    textAlign: "center",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-    animation: "pulse 1s infinite",
-  },
-  starContainer: {
-    fontSize: "5rem",
-    marginBottom: "20px",
-  },
-  bigStar: {
-    display: "inline-block",
-    margin: "0 10px",
-    animation: "pulse 1s infinite",
-  },
-  completeTitle: {
-    fontSize: "4rem",
-    color: "#FF6347",
-    marginBottom: "20px",
-    textShadow: "3px 3px 6px rgba(0,0,0,0.2)",
-  },
-  completeScore: {
-    fontSize: "2.5rem",
-    color: "#667eea",
-    marginBottom: "30px",
-    fontWeight: "bold",
-  },
-  playAgainButton: {
-    fontSize: "2rem",
-    padding: "20px 60px",
-    backgroundColor: "#32CD32",
-    color: "#fff",
-    border: "none",
-    borderRadius: "50px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-    transition: "all 0.3s ease",
-    touchAction: "manipulation",
-    fontFamily: "inherit",
-  },
-};
