@@ -1,224 +1,390 @@
 import React, { useState, useEffect } from 'react';
 
 export default function App() {
-  // State management
-  const [selectedMood, setSelectedMood] = useState(null);
+  // State for selected colour and animation
+  const [selectedColour, setSelectedColour] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [confettiPieces, setConfettiPieces] = useState([]);
+  const [hasStarted, setHasStarted] = useState(false);
 
-  // Mood data
-  const moods = [
+  // Colour palette with emotions and messages
+  const colours = [
     {
-      id: 'happy',
-      name: 'Happy',
-      color: 'bg-yellow-400',
-      borderColor: 'border-yellow-400',
-      emoji: '💛',
-      feedback: "Wow, you chose happy yellow! 😊",
-      bgGradient: 'from-yellow-300 to-yellow-500'
+      id: 'red',
+      name: 'Red',
+      hex: '#FF6B6B',
+      message: "You're feeling strong and bold!",
+      emoji: '💪'
     },
     {
-      id: 'calm',
-      name: 'Calm',
-      color: 'bg-blue-400',
-      borderColor: 'border-blue-400',
-      emoji: '💙',
-      feedback: "That's a lovely calm blue! 😌",
-      bgGradient: 'from-blue-300 to-blue-500'
+      id: 'yellow',
+      name: 'Yellow',
+      hex: '#FFD93D',
+      message: "That's a lovely happy yellow!",
+      emoji: '😊'
     },
     {
-      id: 'angry',
-      name: 'Angry',
-      color: 'bg-red-400',
-      borderColor: 'border-red-400',
-      emoji: '❤️',
-      feedback: "Red means angry — it's okay to feel that way! 😠",
-      bgGradient: 'from-red-300 to-red-500'
+      id: 'blue',
+      name: 'Blue',
+      hex: '#6BCB77',
+      message: "Such a calm and peaceful blue!",
+      emoji: '😌'
     },
     {
-      id: 'relaxed',
-      name: 'Relaxed',
-      color: 'bg-green-400',
-      borderColor: 'border-green-400',
-      emoji: '💚',
-      feedback: "Green is so peaceful! 😊",
-      bgGradient: 'from-green-300 to-green-500'
+      id: 'green',
+      name: 'Green',
+      hex: '#4D96FF',
+      message: "Feeling fresh and relaxed!",
+      emoji: '🌿'
+    },
+    {
+      id: 'pink',
+      name: 'Pink',
+      hex: '#FFB6D9',
+      message: "That's a sweet and kind colour!",
+      emoji: '💕'
+    },
+    {
+      id: 'purple',
+      name: 'Purple',
+      hex: '#B565D8',
+      message: "So creative and magical!",
+      emoji: '✨'
     }
   ];
 
-  // Voice narration function
+  // Speech synthesis function
   const speak = (text) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1.1;
+      utterance.rate = 0.85;
+      utterance.pitch = 1.2;
       utterance.volume = 1;
-      window.speechSynthesis.speak(utterance);
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     }
   };
 
-  // Generate confetti pieces
-  const generateConfetti = () => {
-    const pieces = [];
-    for (let i = 0; i < 30; i++) {
-      pieces.push({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.3,
-        duration: 1 + Math.random() * 0.5,
-        color: ['bg-yellow-400', 'bg-blue-400', 'bg-red-400', 'bg-green-400', 'bg-purple-400', 'bg-pink-400'][Math.floor(Math.random() * 6)]
-      });
+  // Play sound effect using Web Audio API
+  const playSound = (frequency = 800, duration = 150) => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + duration / 1000);
+    } catch (error) {
+      console.log('Audio not supported');
     }
-    return pieces;
   };
 
-  // Handle mood selection
-  const handleMoodSelect = (mood) => {
-    setSelectedMood(mood);
-    setIsAnimating(true);
-    setShowConfetti(true);
-    setConfettiPieces(generateConfetti());
-    
-    // Speak feedback
-    speak(mood.feedback);
-
-    // Reset animation state
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 600);
-
-    // Hide confetti
-    setTimeout(() => {
-      setShowConfetti(false);
-    }, 2000);
-  };
-
-  // Handle reset
-  const handleReset = () => {
-    setSelectedMood(null);
-    setIsAnimating(false);
-    setShowConfetti(false);
-    window.speechSynthesis.cancel();
-  };
-
-  // Cleanup speech on unmount
+  // Initial narration on component mount
   useEffect(() => {
+    if (!hasStarted) {
+      setTimeout(() => {
+        speak("Pick a colour that shows how you feel!");
+        setHasStarted(true);
+      }, 500);
+    }
+    
     return () => {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
     };
-  }, []);
+  }, [hasStarted]);
+
+  // Handle colour selection
+  const handleColourSelect = (colour) => {
+    playSound(600 + Math.random() * 400, 200);
+    setSelectedColour(colour);
+    setIsAnimating(true);
+    
+    setTimeout(() => {
+      speak(colour.message);
+    }, 300);
+    
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 600);
+  };
+
+  // Reset selection
+  const handleReset = () => {
+    playSound(500, 150);
+    setSelectedColour(null);
+    setIsAnimating(false);
+    setTimeout(() => {
+      speak("Pick another colour!");
+    }, 200);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      
-      {/* Confetti animation */}
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          {confettiPieces.map((piece) => (
-            <div
-              key={piece.id}
-              className={`absolute w-3 h-3 ${piece.color} rounded-full animate-fall`}
-              style={{
-                left: `${piece.left}%`,
-                top: '-20px',
-                animationDelay: `${piece.delay}s`,
-                animationDuration: `${piece.duration}s`,
-                animationName: 'fall',
-                animationTimingFunction: 'ease-in',
-                animationFillMode: 'forwards'
-              }}
-            />
-          ))}
-        </div>
-      )}
-
+    <div style={styles.container}>
       <style>{`
-        @keyframes fall {
-          to {
-            transform: translateY(100vh) rotate(360deg);
-            opacity: 0;
-          }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
-        .animate-fall {
-          animation: fall 1.5s ease-in forwards;
+        
+        body {
+          font-family: 'Poppins', 'Comic Sans MS', sans-serif;
+          overflow-x: hidden;
+        }
+        
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes bounce {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          25% { transform: scale(1.1) rotate(-5deg); }
+          75% { transform: scale(1.1) rotate(5deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-10deg); }
+          75% { transform: rotate(10deg); }
+        }
+        
+        .bounce {
+          animation: bounce 0.6s ease;
+        }
+        
+        .pulse {
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .wiggle {
+          animation: wiggle 0.5s ease-in-out;
         }
       `}</style>
-
-      {/* Main container */}
-      <div className="w-full max-w-2xl mx-auto">
+      
+      {/* Main Content */}
+      <div style={styles.content}>
         
         {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-8 text-purple-700">
+        <h1 style={styles.title}>
           🎨 Colour My Mood! 🎨
         </h1>
-
-        {/* Instruction text */}
-        {!selectedMood && (
-          <p className="text-2xl md:text-3xl text-center mb-8 text-gray-700 font-semibold">
-            Choose a colour for your mood!
+        
+        {/* Instruction Text */}
+        {!selectedColour && (
+          <p style={styles.instruction}>
+            Pick a colour that shows how you feel!
           </p>
         )}
-
-        {/* Face display */}
-        <div className="flex flex-col items-center justify-center mb-8">
-          <div
-            className={`relative w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center transition-all duration-500 ${
-              isAnimating ? 'scale-110' : 'scale-100'
-            } ${
-              selectedMood
-                ? `bg-gradient-to-br ${selectedMood.bgGradient} border-8 ${selectedMood.borderColor}`
-                : 'bg-white border-8 border-gray-300'
-            } shadow-2xl`}
+        
+        {/* Face Display */}
+        <div style={styles.faceContainer}>
+          <div 
+            className={isAnimating ? 'bounce' : (selectedColour ? 'pulse' : '')}
+            style={{
+              ...styles.face,
+              backgroundColor: selectedColour ? selectedColour.hex : '#FFFFFF',
+              border: selectedColour ? `8px solid ${selectedColour.hex}` : '8px solid #E0E0E0',
+              filter: selectedColour ? 'drop-shadow(0 10px 30px rgba(0,0,0,0.2))' : 'drop-shadow(0 5px 15px rgba(0,0,0,0.1))'
+            }}
           >
-            {/* Face emoji */}
-            <div className="text-8xl md:text-9xl">
-              {selectedMood ? selectedMood.emoji : '😀'}
-            </div>
+            <span style={styles.faceEmoji}>
+              {selectedColour ? selectedColour.emoji : '😊'}
+            </span>
           </div>
-
-          {/* Feedback text */}
-          {selectedMood && (
-            <div className="mt-6 text-center animate-bounce">
-              <p className="text-2xl md:text-3xl font-bold text-gray-800 px-4">
-                {selectedMood.feedback}
-              </p>
-            </div>
-          )}
         </div>
-
-        {/* Mood colour buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 px-4">
-          {moods.map((mood) => (
-            <button
-              key={mood.id}
-              onClick={() => handleMoodSelect(mood)}
-              className={`${mood.color} rounded-3xl p-6 md:p-8 shadow-lg transform transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-400`}
-              aria-label={`Select ${mood.name} mood`}
-            >
-              <div className="text-5xl md:text-6xl mb-2">{mood.emoji}</div>
-              <div className="text-xl md:text-2xl font-bold text-white drop-shadow-lg">
-                {mood.name}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Reset button */}
-        {selectedMood && (
-          <div className="flex justify-center">
-            <button
-              onClick={handleReset}
-              className="bg-purple-600 hover:bg-purple-700 text-white text-xl md:text-2xl font-bold py-4 px-8 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-400"
-            >
-              🔄 Choose Again!
-            </button>
+        
+        {/* Feedback Message */}
+        {selectedColour && (
+          <div style={styles.messageContainer}>
+            <p style={styles.message}>
+              {selectedColour.message}
+            </p>
           </div>
+        )}
+        
+        {/* Colour Palette */}
+        {!selectedColour && (
+          <div style={styles.colourGrid}>
+            {colours.map((colour) => (
+              <button
+                key={colour.id}
+                onClick={() => handleColourSelect(colour)}
+                style={{
+                  ...styles.colourButton,
+                  backgroundColor: colour.hex
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.15)';
+                  playSound(400, 50);
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+                aria-label={`Select ${colour.name}`}
+              >
+                <span style={styles.colourName}>{colour.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {/* Reset Button */}
+        {selectedColour && (
+          <button
+            onClick={handleReset}
+            style={styles.resetButton}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.backgroundColor = '#9333EA';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.backgroundColor = '#A855F7';
+            }}
+          >
+            🔄 Try Another Colour!
+          </button>
         )}
       </div>
     </div>
   );
 }
+
+// Inline styles object
+const styles = {
+  container: {
+    minHeight: '100vh',
+    background: 'linear-gradient(-45deg, #FFF5E1, #FFE5EC, #E5F3FF, #F0E5FF)',
+    backgroundSize: '400% 400%',
+    animation: 'gradientShift 15s ease infinite',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px',
+    fontFamily: "'Poppins', 'Comic Sans MS', sans-serif"
+  },
+  content: {
+    maxWidth: '900px',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '30px'
+  },
+  title: {
+    fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+    fontWeight: '800',
+    color: '#6B21A8',
+    textAlign: 'center',
+    textShadow: '3px 3px 6px rgba(0,0,0,0.1)',
+    margin: '0'
+  },
+  instruction: {
+    fontSize: 'clamp(1.3rem, 3vw, 2rem)',
+    fontWeight: '600',
+    color: '#7C3AED',
+    textAlign: 'center',
+    margin: '0'
+  },
+  faceContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: '20px 0'
+  },
+  face: {
+    width: 'clamp(200px, 40vw, 320px)',
+    height: 'clamp(200px, 40vw, 320px)',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.5s ease',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+  },
+  faceEmoji: {
+    fontSize: 'clamp(5rem, 15vw, 8rem)',
+    lineHeight: 1
+  },
+  messageContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: '30px',
+    padding: '20px 40px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+    maxWidth: '600px'
+  },
+  message: {
+    fontSize: 'clamp(1.3rem, 3vw, 2rem)',
+    fontWeight: '700',
+    color: '#6B21A8',
+    textAlign: 'center',
+    margin: '0'
+  },
+  colourGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+    gap: '20px',
+    width: '100%',
+    maxWidth: '700px',
+    padding: '20px'
+  },
+  colourButton: {
+    width: '100%',
+    aspectRatio: '1',
+    minHeight: '120px',
+    border: 'none',
+    borderRadius: '25px',
+    cursor: 'pointer',
+    fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    outline: 'none',
+    fontFamily: 'inherit'
+  },
+  colourName: {
+    pointerEvents: 'none'
+  },
+  resetButton: {
+    backgroundColor: '#A855F7',
+    color: '#FFFFFF',
+    fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
+    fontWeight: '700',
+    padding: '18px 40px',
+    border: 'none',
+    borderRadius: '50px',
+    cursor: 'pointer',
+    boxShadow: '0 6px 20px rgba(168, 85, 247, 0.4)',
+    transition: 'all 0.3s ease',
+    outline: 'none',
+    fontFamily: 'inherit',
+    marginTop: '10px'
+  }
+};
