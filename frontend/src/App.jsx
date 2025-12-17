@@ -4,7 +4,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
-import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import LifeSkills from "./pages/LifeSkills/LifeSkills";
 import JobRoleSimulation from "./pages/JobRoleSimulation/JobRoleSimulation";
