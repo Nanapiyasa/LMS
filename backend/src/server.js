@@ -5,8 +5,8 @@ const cors = require("cors");
 // Load env vars
 dotenv.config();
 
-// Initialize Firebase (instead of MongoDB)
-const db = require("./config/firebase"); // this will now be Firebase Firestore
+// Initialize Supabase
+const { supabase } = require("./config/supabase");
 
 const app = express();
 

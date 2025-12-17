@@ -1,35 +1,107 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import Login from "./pages/Login";
+import TeacherDashboard from "./pages/TeacherDashboard/TeacherDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
+import LifeSkills from "./pages/LifeSkills/LifeSkills";
+import JobRoleSimulation from "./pages/JobRoleSimulation/JobRoleSimulation";
+import CommunicationSocial from "./pages/CommunicationSocial/CommunicationSocial";
+import BehaviourEmotional from "./pages/BehaviourEmotional/Level_1_Colour_My_Mood";
+import ParentDashboard from "./pages/ParentDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import Profile from "./pages/Profile";
+import CSSDebugTest from "./pages/CSSDebugTest";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/css-debug" element={<CSSDebugTest />} />
+          <Route
+            path="/student/*"
+            element={
+              <ProtectedRoute requiredRole="student">
+                <Routes>
+                  <Route path="" element={<StudentDashboard />} />
+                  <Route path="life-skills" element={<LifeSkills />} />
+                  <Route
+                    path="job-role-simulation"
+                    element={<JobRoleSimulation />}
+                  />
+                  <Route
+                    path="communication-social"
+                    element={<CommunicationSocial />}
+                  />
+                  <Route
+                    path="behaviour-emotional"
+                    element={<BehaviourEmotional />}
+                  />
+                </Routes>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/*"
+            element={
+              <ProtectedRoute requiredRole="teacher">
+                <TeacherDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent/*"
+            element={
+              <ProtectedRoute requiredRole="parent">
+                <ParentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Default redirect - will be handled by ProtectedRoute */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <ProtectedRoute>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
