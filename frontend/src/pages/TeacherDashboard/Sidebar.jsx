@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { BookOpen, BarChart3, FileText, Users, Home, LogOut } from 'lucide-react';
 
 export default function Sidebar() {
@@ -13,22 +14,26 @@ export default function Sidebar() {
         </div>
 
         <nav className="space-y-1">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 bg-orange-50 text-orange-600 rounded-lg font-medium">
+          <Link to="/teacher" className="flex items-center gap-3 px-4 py-3 bg-orange-50 text-orange-600 rounded-lg font-medium">
             <Home className="w-5 h-5" />
             Dashboard
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+          </Link>
+          <Link to="/teacher/students" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
             <Users className="w-5 h-5" />
             Students
-          </a>
+          </Link>
           <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
             <BarChart3 className="w-5 h-5" />
             Reports
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+          <Link to="/teacher/classes" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
             <FileText className="w-5 h-5" />
-            Learning Section
-          </a>
+            Classes
+          </Link>
+          <Link to="/teacher/signup" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+            <Users className="w-5 h-5" />
+            Register Teacher
+          </Link>
         </nav>
 
         <div className="mt-12">

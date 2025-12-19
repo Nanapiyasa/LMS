@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../supabaseConfig';
-import { getCurrentUser, signOut } from '../utils/supabaseHelpers';
+import { authAPI, getToken } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -18,79 +17,43 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
+    // Check if user is already logged in (has token)
+    const checkAuth = async () => {
       const safety = setTimeout(() => setLoading(false), 4000);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          // Fetch profile without blocking UI
-          fetchUserData(session.user.id).catch(() => {});
+        const token = getToken();
+        if (token) {
+          // Fetch current user data
+          const response = await authAPI.getCurrentUser();
+          if (response.user) {
+            setUser({ id: response.user.id, email: response.user.email });
+            setUserData(response.user);
+          }
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        console.error('Error checking auth:', error);
+        // Token might be invalid, clear it
+        authAPI.logout();
       } finally {
         clearTimeout(safety);
         setLoading(false);
       }
     };
 
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          // Non-blocking profile fetch
-          fetchUserData(session.user.id).catch(() => {});
-        } else {
-          setUser(null);
-          setUserData(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, []);
-
-  const fetchUserData = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user data:', error);
-        return;
-      }
-
-      setUserData(data);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
 
   const login = async (email, password) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        setUser(data.user);
-        await fetchUserData(data.user.id);
+      const response = await authAPI.login(email, password);
+      
+      if (response.user && response.token) {
+        setUser({ id: response.user.id, email: response.user.email });
+        setUserData(response.user);
       }
 
-      return { data, error: null };
+      return { data: response, error: null };
     } catch (error) {
       return { data: null, error };
     } finally {
@@ -101,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      await signOut();
+      authAPI.logout();
       setUser(null);
       setUserData(null);
     } catch (error) {
@@ -117,8 +80,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    isAuthenticated: !!user,
-    userRole: userData?.role || 'student'
+    isAuthenticated: !!user && !!getToken(),
+    userRole: userData?.role || 'teacher'
   };
 
   return (

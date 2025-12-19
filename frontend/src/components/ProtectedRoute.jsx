@@ -34,9 +34,8 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
         return <Navigate to="/admin" replace />;
       case 'teacher':
         return <Navigate to="/teacher" replace />;
-      case 'student':
       default:
-        return <Navigate to="/student" replace />;
+        return <Navigate to="/teacher" replace />;
     }
   }
 

@@ -17,8 +17,8 @@ export default function Login() {
   useEffect(() => {
     if (user) {
       // If already authenticated, redirect to intended or role-based dashboard
-      const role = userData?.role || 'student';
-      const roleHome = role === 'teacher' ? '/teacher' : role === 'parent' ? '/parent' : role === 'admin' ? '/admin' : '/student';
+      const role = userData?.role || 'teacher';
+      const roleHome = role === 'teacher' ? '/teacher' : role === 'admin' ? '/admin' : '/teacher';
       navigate(location.state?.from ? from : roleHome, { replace: true });
     }
   }, [user, userData, from, navigate, location.state]);
@@ -107,8 +107,8 @@ export default function Login() {
         return;
       }
       // Redirect will be handled by auth listener, but as a fallback:
-      const role = userData?.role || 'student';
-      const roleHome = role === 'teacher' ? '/teacher' : role === 'parent' ? '/parent' : role === 'admin' ? '/admin' : '/student';
+      const role = userData?.role || 'teacher';
+      const roleHome = role === 'teacher' ? '/teacher' : role === 'admin' ? '/admin' : '/teacher';
       navigate(location.state?.from ? from : roleHome, { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to sign in');
