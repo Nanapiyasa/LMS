@@ -18,6 +18,7 @@
   position: relative;
   overflow: hidden;
 }
+
 .decorative-global {
   position: absolute;
   inset: 0;
@@ -25,13 +26,19 @@
   opacity: 0.25;
   z-index: 0;
 }
+
 .decorative-global .circle,
 .decorative-global .plus,
 .decorative-global .dots,
-.decorative-global .wave-pattern { position: absolute; }
+.decorative-global .wave-pattern { 
+  position: absolute; 
+}
 
 /* Reuse sizes/placements similar to original left panel */
-.decorative-global .circle { border: 2px solid #ffffff; border-radius: 50%; }
+.decorative-global .circle { 
+  border: 2px solid #ffffff; 
+  border-radius: 50%; 
+}
 .decorative-global .circle:nth-child(1) { width: 140px; height: 140px; top: 12%; right: 18%; }
 .decorative-global .circle:nth-child(2) { width: 200px; height: 200px; bottom: 16%; left: 12%; }
 .decorative-global .plus { color: #ffffff; font-size: 32px; font-weight: 300; }
@@ -55,12 +62,40 @@
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: relative;
-  z-index: 1; /* above global decoration */
+  z-index: 1;
+  transition: max-width 0.4s ease;
+}
+
+/* Full-width mode for signup (hides left panel, expands right panel) */
+.container.full-width {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.container.full-width .left-panel {
+  display: none;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 60px 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: padding 0.4s ease;
+}
+
+.right-panel.full-width-panel {
+  width: 100%;
+  border-radius: 20px;
+}
+
+.full-width-panel .form-container {
+  padding: 80px 60px;
 }
 
 .left-panel {
   flex: 1;
-  /* Gradient background only; logo will be a centered img element */
   background: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%);
   padding: 60px 50px;
   position: relative;
@@ -86,117 +121,16 @@
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.25));
-  transform: translateY(-48px); /* move further up to clear the clock */
+  transform: translateY(-48px);
 }
-
-.decorative-elements {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  opacity: 0.3;
-}
-
-.circle {
-  position: absolute;
-  border: 2px solid white;
-  border-radius: 50%;
-}
-
-.circle:nth-child(1) {
-  width: 100px;
-  height: 100px;
-  top: 10%;
-  right: 15%;
-}
-
-.circle:nth-child(2) {
-  width: 150px;
-  height: 150px;
-  bottom: 15%;
-  left: 10%;
-}
-
-.plus {
-  position: absolute;
-  color: white;
-  font-size: 30px;
-  font-weight: 300;
-}
-
-.plus:nth-child(3) {
-  top: 15%;
-  left: 15%;
-}
-
-.plus:nth-child(4) {
-  bottom: 40%;
-  right: 20%;
-}
-
-.dots {
-  position: absolute;
-  display: grid;
-  grid-template-columns: repeat(3, 6px);
-  gap: 8px;
-  top: 12%;
-  right: 10%;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-}
-
-.wave-pattern {
-  position: absolute;
-  left: 5%;
-  top: 30%;
-  width: 120px;
-  height: 80px;
-}
-
-.wave-line {
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: white;
-}
-
-.wave-line:nth-child(1) { top: 0; }
-.wave-line:nth-child(2) { top: 20px; }
-.wave-line:nth-child(3) { top: 40px; }
-.wave-line:nth-child(4) { top: 60px; }
 
 .content {
   position: relative;
   z-index: 1;
 }
 
-.logo {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 30px;
-  letter-spacing: -1px;
-}
-
-/* Hide placeholder text logo when using background image */
-.content .logo { display: none; }
-
-h1 {
-  font-size: 36px;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.subtitle {
-  font-size: 16px;
-  opacity: 0.9;
-  line-height: 1.5;
+.content .logo { 
+  display: none; 
 }
 
 .datetime-display {
@@ -217,48 +151,56 @@ h1 {
   opacity: 0.9;
 }
 
-.right-panel {
-  flex: 1;
-  padding: 60px 50px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
 .form-container h2 {
   font-size: 32px;
   color: #333;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
+/* Input groups - underline style */
 .input-group {
-  margin-bottom: 25px;
+  margin-bottom: 32px;
+  position: relative;
 }
 
 label {
   display: block;
   color: #666;
   font-size: 14px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  font-weight: 500;
 }
 
-input[type="text"],
-input[type="password"] {
+/* Underline inputs */
+.input-group.underline input {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 15px;
-  transition: all 0.3s ease;
+  padding: 12px 0;
+  border: none;
+  border-bottom: 2px solid #ddd;
+  background: transparent;
+  font-size: 16px;
+  color: #333; /* Ensures text is clearly visible */
+  transition: border-color 0.3s ease;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus {
+.input-group.underline input:focus {
   outline: none;
-  border-color: var(--brand-1);
-  box-shadow: 0 0 0 3px var(--brand-1-weak);
+  border-bottom-color: var(--brand-1);
 }
 
+.input-group.underline input::placeholder {
+  color: #aaa;
+  opacity: 0.8;
+}
+
+/* File input styling */
+.file-input {
+  padding: 12px 0;
+  font-size: 15px;
+}
+
+/* Form options */
 .form-options {
   display: flex;
   justify-content: space-between;
@@ -283,28 +225,133 @@ input[type="password"]:focus {
   text-decoration: underline;
 }
 
-button[type="submit"] {
-  width: 100%;
-  padding: 16px;
+/* Progress indicator - 6 steps */
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 30px 0 50px;
+  gap: 16px;
+}
+
+.progress-indicator span {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.progress-indicator .active {
+  background: var(--brand-1);
+  color: white;
+  box-shadow: 0 0 0 4px var(--brand-1-weak);
+}
+
+.progress-indicator .complete {
+  background: var(--brand-1);
+  color: white;
+}
+
+.progress-indicator .line {
+  flex: 1;
+  height: 3px;
+  background: #e0e0e0;
+}
+
+/* Profile preview */
+.profile-preview {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.profile-preview img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid var(--brand-1-weak);
+}
+
+/* Password toggle */
+.password-group .password-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0;
+  bottom: 12px;
+  background: none;
+  border: none;
+  color: var(--brand-1);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* Error alert */
+.alert-error {
+  background: #fff0f0;
+  color: #c33;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  text-align: center;
+  border: 1px solid #fcc;
+}
+
+/* Buttons */
+.button-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 40px;
+}
+
+.button-row button {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
   background: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button[type="submit"]:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px var(--brand-1-weak);
 }
 
-button[type="submit"]:active {
-  transform: translateY(0);
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
+.btn-secondary {
+  background: transparent;
+  color: var(--brand-1);
+  border: 2px solid var(--brand-1);
+}
+
+.btn-secondary:hover {
+  background: var(--brand-1-weak);
+  transform: translateY(-2px);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
@@ -324,5 +371,27 @@ button[type="submit"]:active {
 
   .right-panel {
     padding: 40px 30px;
+  }
+
+  .full-width-panel .form-container {
+    padding: 60px 40px;
+  }
+
+  .button-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .progress-indicator {
+    margin: 20px 0 40px;
+  }
+
+  .profile-preview img {
+    width: 120px;
+    height: 120px;
+  }
+
+  .form-container h2 {
+    font-size: 28px;
   }
 }

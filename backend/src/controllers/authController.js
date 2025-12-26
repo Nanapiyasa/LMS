@@ -3,58 +3,82 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // Generate JWT token
-const generateToken = (userId, email, role) => {
+const generateToken = (teacherId, email, role = 'teacher') => {
   return jwt.sign(
-    { userId, email, role },
+    { teacherId, email, role },
     process.env.JWT_SECRET || 'your-secret-key-change-this',
     { expiresIn: '7d' }
   );
 };
 
-// Register new user
+// SAFE PARAM FOR ALL QUERIES
+const safe = (value) => (value === undefined ? null : value);
+
+// Register new teacher - FULLY PROTECTED
 const register = async (req, res) => {
   try {
-    const { email, password, name, role = 'student' } = req.body;
+    const body = req.body || {};
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const initials     = body.initials;
+    const first_name   = body.first_name;
+    const last_name    = body.last_name;
+    const image_base64 = body.image_base64;
+    const address      = body.address;
+    const mobile_no    = body.mobile_no;
+    const email        = body.email;
+    const username     = body.username;
+    const password     = body.password;
+
+    if (!email || !password || !username || !first_name || !last_name || !mobile_no) {
+      return res.status(400).json({ error: 'All required fields must be filled' });
     }
 
-    // Check if user already exists
-    const [existingUsers] = await pool.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
+    // PROTECTED: duplicate check
+    const [existingTeachers] = await pool.execute(
+      'SELECT teacher_id FROM teachers WHERE email = ? OR username = ?',
+      [safe(email), safe(username)]
     );
 
-    if (existingUsers.length > 0) {
-      return res.status(400).json({ error: 'User already exists' });
+    if (existingTeachers.length > 0) {
+      return res.status(400).json({ error: 'Email or username already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into database
+    // PROTECTED: insert query
     const [result] = await pool.execute(
-      `INSERT INTO users (email, password, name, role, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, NOW(), NOW())`,
-      [email, hashedPassword, name || null, role]
+      `INSERT INTO teachers 
+       (initials, first_name, last_name, image_base64, address, mobile_no, email, username, password, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        safe(initials),
+        safe(first_name),
+        safe(last_name),
+        safe(image_base64),
+        safe(address),
+        safe(mobile_no),
+        safe(email),
+        safe(username),
+        safe(hashedPassword)
+      ]
     );
 
-    const userId = result.insertId;
-
-    // Generate token
-    const token = generateToken(userId, email, role);
-
-    // Get user data
-    const [users] = await pool.execute(
-      'SELECT id, email, name, role, created_at FROM users WHERE id = ?',
-      [userId]
-    );
+    const teacherId = result.insertId;
+    const token = generateToken(teacherId, email);
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'Teacher registered successfully',
       token,
-      user: users[0]
+      user: {
+        teacher_id: teacherId,
+        email,
+        username,
+        first_name,
+        last_name,
+        initials: initials || null,
+        mobile_no,
+        role: 'teacher'
+      }
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -62,51 +86,53 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
+// Login - also protected
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user by email
-    const [users] = await pool.execute(
-      'SELECT id, email, password, name, role FROM users WHERE email = ?',
-      [email]
+    const trimmedEmail = String(email).trim();
+
+    const [teachers] = await pool.execute(
+      `SELECT teacher_id, email, password, first_name, last_name, initials, mobile_no, username 
+       FROM teachers WHERE email = ?`,
+      [safe(trimmedEmail)]
     );
 
-    if (users.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (teachers.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const user = users[0];
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const teacher = teachers[0];
+    const isValidPassword = await bcrypt.compare(password, teacher.password);
 
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Generate token
-    const token = generateToken(user.id, user.email, user.role);
+    const token = generateToken(teacher.teacher_id, teacher.email);
 
-    // Update last login
     await pool.execute(
-      'UPDATE users SET updated_at = NOW() WHERE id = ?',
-      [user.id]
+      'UPDATE teachers SET updated_at = NOW() WHERE teacher_id = ?',
+      [safe(teacher.teacher_id)]
     );
 
     res.json({
       message: 'Login successful',
       token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
+        teacher_id: teacher.teacher_id,
+        email: teacher.email,
+        username: teacher.username,
+        first_name: teacher.first_name,
+        last_name: teacher.last_name,
+        initials: teacher.initials,
+        mobile_no: teacher.mobile_no,
+        role: 'teacher'
       }
     });
   } catch (error) {
@@ -115,21 +141,27 @@ const login = async (req, res) => {
   }
 };
 
-// Get current user
+// getCurrentUser - protected
 const getCurrentUser = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const teacherId = req.user?.teacherId;
 
-    const [users] = await pool.execute(
-      'SELECT id, email, name, role, created_at, updated_at FROM users WHERE id = ?',
-      [userId]
-    );
-
-    if (users.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!teacherId) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    res.json({ user: users[0] });
+    const [teachers] = await pool.execute(
+      `SELECT teacher_id, email, username, first_name, last_name, initials, mobile_no, 
+       address, image_base64, role, created_at, updated_at 
+       FROM teachers WHERE teacher_id = ?`,
+      [safe(teacherId)]
+    );
+
+    if (teachers.length === 0) {
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
+
+    res.json({ user: teachers[0] });
   } catch (error) {
     console.error('Get current user error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -141,9 +173,3 @@ module.exports = {
   login,
   getCurrentUser
 };
-
-
-
-
-
-

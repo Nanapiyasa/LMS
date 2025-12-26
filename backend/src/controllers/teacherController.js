@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure multer for file uploads
+// Configure multer for teacher profile images
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, '../../uploads/teachers');
@@ -24,13 +24,14 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error('Only image files (jpeg, jpg, png, gif, webp) are allowed!'));
     }
   }
 }).single('image');
@@ -44,7 +45,7 @@ const generateToken = (teacherId, email) => {
   );
 };
 
-// Teacher signup
+// Teacher Signup (Registration)
 const signup = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -52,57 +53,88 @@ const signup = async (req, res) => {
     }
 
     try {
-      const { initials, first_name, last_name, address, mobile_no, email, password } = req.body;
-      const image = req.file ? `/uploads/teachers/${req.file.filename}` : null;
+      const {
+        initials,
+        first_name,
+        last_name,
+        address,
+        mobile_no,
+        email,
+        password
+      } = req.body;
 
-      if (!initials || !first_name || !last_name || !email || !password) {
+      // Image path (if uploaded)
+      const imagePath = req.file ? `/uploads/teachers/${req.file.filename}` : null;
+
+      // Required fields
+      if (!first_name || !last_name || !mobile_no || !email || !password) {
+        if (req.file) fs.unlinkSync(req.file.path); // cleanup
         return res.status(400).json({ error: 'Required fields are missing' });
       }
 
-      // Check if teacher already exists
-      const [existingTeachers] = await pool.execute(
-        'SELECT id FROM teachers WHERE email = ?',
+      // Check if email already exists
+      const [existing] = await pool.execute(
+        'SELECT teacher_id FROM teachers WHERE email = ?',
         [email]
       );
 
-      if (existingTeachers.length > 0) {
-        // Delete uploaded file if user exists
-        if (req.file) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(400).json({ error: 'Teacher with this email already exists' });
+      if (existing.length > 0) {
+        if (req.file) fs.unlinkSync(req.file.path); // cleanup
+        return res.status(400).json({ error: 'Email already registered' });
       }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert teacher into database
+      // Insert new teacher
       const [result] = await pool.execute(
-        `INSERT INTO teachers (initials, first_name, last_name, image, address, mobile_no, email, password) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [initials, first_name, last_name, image, address || null, mobile_no || null, email, hashedPassword]
+        `INSERT INTO teachers 
+         (initials, first_name, last_name, image_base64, address, mobile_no, email, password, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [
+          initials || null,
+          first_name,
+          last_name,
+          imagePath,           // stored as file path string, not base64
+          address || null,
+          mobile_no,
+          email,
+          hashedPassword
+        ]
       );
 
       const teacherId = result.insertId;
-
-      // Generate token
       const token = generateToken(teacherId, email);
 
-      // Get teacher data
-      const [teachers] = await pool.execute(
-        'SELECT id, initials, first_name, last_name, image, address, mobile_no, email, created_at FROM teachers WHERE id = ?',
+      // Fetch created teacher (without password)
+      const [newTeacher] = await pool.execute(
+        `SELECT 
+           teacher_id,
+           initials,
+           first_name,
+           last_name,
+           image_base64 AS image,
+           address,
+           mobile_no,
+           email,
+           created_at
+         FROM teachers 
+         WHERE teacher_id = ?`,
         [teacherId]
       );
 
       res.status(201).json({
         message: 'Teacher registered successfully',
         token,
-        teacher: teachers[0]
+        teacher: newTeacher[0]
       });
+
     } catch (error) {
-      // Delete uploaded file on error
+      // Cleanup uploaded file on any error
       if (req.file) {
-        fs.unlinkSync(req.file.path);
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error('Failed to delete uploaded file:', err);
+        });
       }
       console.error('Teacher signup error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -114,9 +146,16 @@ const signup = async (req, res) => {
 const getAllTeachers = async (req, res) => {
   try {
     const [teachers] = await pool.execute(
-      `SELECT id, initials, first_name, last_name, 
-       CONCAT(first_name, ' ', last_name) AS full_name,
-       image, email, mobile_no, created_at 
+      `SELECT 
+         teacher_id,
+         initials,
+         first_name,
+         last_name,
+         CONCAT(first_name, ' ', last_name) AS full_name,
+         image_base64 AS image,
+         email,
+         mobile_no,
+         created_at
        FROM teachers 
        ORDER BY first_name, last_name`
     );
@@ -132,8 +171,20 @@ const getAllTeachers = async (req, res) => {
 const getTeacherById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const [teachers] = await pool.execute(
-      'SELECT id, initials, first_name, last_name, image, address, mobile_no, email, created_at FROM teachers WHERE id = ?',
+      `SELECT 
+         teacher_id,
+         initials,
+         first_name,
+         last_name,
+         image_base64 AS image,
+         address,
+         mobile_no,
+         email,
+         created_at
+       FROM teachers 
+       WHERE teacher_id = ?`,
       [id]
     );
 
@@ -143,7 +194,7 @@ const getTeacherById = async (req, res) => {
 
     res.json(teachers[0]);
   } catch (error) {
-    console.error('Get teacher error:', error);
+    console.error('Get teacher by ID error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -152,6 +203,5 @@ module.exports = {
   signup,
   getAllTeachers,
   getTeacherById,
-  upload
+  upload // exported in case you need middleware access elsewhere
 };
-

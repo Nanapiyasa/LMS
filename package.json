@@ -1,7 +1,10 @@
 {
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "lucide-react": "^0.560.0",
+    "mysql2": "^2.3.3",
     "recharts": "^3.5.1"
   }
 }
