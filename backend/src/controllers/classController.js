@@ -1,27 +1,19 @@
 const { pool } = require('../config/database');
 
-// Create a new class
+const safe = (value) => (value === undefined ? null : value);
+
+// Create a new class (Admin only)
 const createClass = async (req, res) => {
   try {
-    const { class_id, teacher_id } = req.body;
+    const { class_name, teacher_id } = req.body;
 
-    if (!class_id || !teacher_id) {
-      return res.status(400).json({ error: 'Class ID and Teacher ID are required' });
-    }
-
-    // Check if class_id already exists
-    const [existingClasses] = await pool.execute(
-      'SELECT id FROM classes WHERE class_id = ?',
-      [class_id]
-    );
-
-    if (existingClasses.length > 0) {
-      return res.status(400).json({ error: 'Class ID already exists' });
+    if (!class_name || !teacher_id) {
+      return res.status(400).json({ error: 'Class name and Teacher ID are required' });
     }
 
     // Verify teacher exists
     const [teachers] = await pool.execute(
-      'SELECT id FROM teachers WHERE id = ?',
+      'SELECT id, first_name, last_name FROM teachers WHERE id = ?',
       [teacher_id]
     );
 
@@ -29,26 +21,25 @@ const createClass = async (req, res) => {
       return res.status(404).json({ error: 'Teacher not found' });
     }
 
+    const teacher = teachers[0];
+
     // Insert class
     const [result] = await pool.execute(
-      'INSERT INTO classes (class_id, teacher_id, student_count) VALUES (?, ?, 0)',
-      [class_id, teacher_id]
-    );
-
-    // Get created class with teacher details
-    const [classes] = await pool.execute(
-      `SELECT c.id, c.class_id, c.teacher_id, c.student_count,
-       t.initials, t.first_name, t.last_name,
-       CONCAT(t.first_name, ' ', t.last_name) AS teacher_name
-       FROM classes c
-       JOIN teachers t ON c.teacher_id = t.id
-       WHERE c.id = ?`,
-      [result.insertId]
+      'INSERT INTO classes (class_name, teacher_id, student_count, is_active) VALUES (?, ?, 0, TRUE)',
+      [safe(class_name), safe(teacher_id)]
     );
 
     res.status(201).json({
       message: 'Class created successfully',
-      class: classes[0]
+      class: {
+        id: result.insertId,
+        class_name,
+        teacher_id,
+        teacher_name: `${teacher.first_name} ${teacher.last_name}`,
+        student_count: 0,
+        is_active: true,
+        created_at: new Date()
+      }
     });
   } catch (error) {
     console.error('Create class error:', error);
@@ -60,12 +51,14 @@ const createClass = async (req, res) => {
 const getAllClasses = async (req, res) => {
   try {
     const [classes] = await pool.execute(
-      `SELECT c.id, c.class_id, c.teacher_id, c.student_count,
-       t.initials, t.first_name, t.last_name,
-       CONCAT(t.first_name, ' ', t.last_name) AS teacher_name
+      `SELECT c.id, c.class_name, c.teacher_id, c.student_count, c.is_active,
+              t.initials, t.first_name, t.last_name,
+              CONCAT(t.first_name, ' ', t.last_name) AS teacher_name,
+              c.created_at, c.updated_at
        FROM classes c
-       JOIN teachers t ON c.teacher_id = t.id
-       ORDER BY c.class_id`
+       LEFT JOIN teachers t ON c.teacher_id = t.id
+       WHERE c.is_active = TRUE
+       ORDER BY c.class_name`
     );
 
     res.json(classes);
@@ -79,13 +72,14 @@ const getAllClasses = async (req, res) => {
 const getClassById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const [classes] = await pool.execute(
-      `SELECT c.id, c.class_id, c.teacher_id, c.student_count,
-       t.initials, t.first_name, t.last_name,
-       CONCAT(t.first_name, ' ', t.last_name) AS teacher_name
+      `SELECT c.id, c.class_name, c.teacher_id, c.student_count, c.is_active,
+              t.initials, t.first_name, t.last_name,
+              CONCAT(t.first_name, ' ', t.last_name) AS teacher_name
        FROM classes c
-       JOIN teachers t ON c.teacher_id = t.id
-       WHERE c.id = ?`,
+       LEFT JOIN teachers t ON c.teacher_id = t.id
+       WHERE c.id = ? AND c.is_active = TRUE`,
       [id]
     );
 
@@ -100,11 +94,11 @@ const getClassById = async (req, res) => {
   }
 };
 
-// Update class
+// Update class (Admin only)
 const updateClass = async (req, res) => {
   try {
     const { id } = req.params;
-    const { class_id, teacher_id } = req.body;
+    const { class_name, teacher_id } = req.body;
 
     // Check if class exists
     const [existingClasses] = await pool.execute(
@@ -116,22 +110,10 @@ const updateClass = async (req, res) => {
       return res.status(404).json({ error: 'Class not found' });
     }
 
-    // If class_id is being updated, check for duplicates
-    if (class_id) {
-      const [duplicateClasses] = await pool.execute(
-        'SELECT id FROM classes WHERE class_id = ? AND id != ?',
-        [class_id, id]
-      );
-
-      if (duplicateClasses.length > 0) {
-        return res.status(400).json({ error: 'Class ID already exists' });
-      }
-    }
-
     // Verify teacher exists if being updated
     if (teacher_id) {
       const [teachers] = await pool.execute(
-        'SELECT id FROM teachers WHERE id = ?',
+        'SELECT id, first_name, last_name FROM teachers WHERE id = ?',
         [teacher_id]
       );
 
@@ -144,9 +126,9 @@ const updateClass = async (req, res) => {
     const updates = [];
     const values = [];
 
-    if (class_id) {
-      updates.push('class_id = ?');
-      values.push(class_id);
+    if (class_name) {
+      updates.push('class_name = ?');
+      values.push(class_name);
     }
 
     if (teacher_id) {
@@ -168,11 +150,11 @@ const updateClass = async (req, res) => {
 
     // Get updated class
     const [classes] = await pool.execute(
-      `SELECT c.id, c.class_id, c.teacher_id, c.student_count,
-       t.initials, t.first_name, t.last_name,
-       CONCAT(t.first_name, ' ', t.last_name) AS teacher_name
+      `SELECT c.id, c.class_name, c.teacher_id, c.student_count, c.is_active,
+              t.initials, t.first_name, t.last_name,
+              CONCAT(t.first_name, ' ', t.last_name) AS teacher_name
        FROM classes c
-       JOIN teachers t ON c.teacher_id = t.id
+       LEFT JOIN teachers t ON c.teacher_id = t.id
        WHERE c.id = ?`,
       [id]
     );
@@ -187,13 +169,25 @@ const updateClass = async (req, res) => {
   }
 };
 
-// Delete class
+// Delete class (Admin only)
 const deleteClass = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Check if class has students
+    const [students] = await pool.execute(
+      'SELECT COUNT(*) as count FROM students WHERE class_id = ?',
+      [id]
+    );
+
+    if (students[0].count > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete class with assigned students. Please remove or reassign students first.' 
+      });
+    }
+
     const [result] = await pool.execute(
-      'DELETE FROM classes WHERE id = ?',
+      'UPDATE classes SET is_active = FALSE, updated_at = NOW() WHERE id = ?',
       [id]
     );
 
@@ -208,11 +202,34 @@ const deleteClass = async (req, res) => {
   }
 };
 
+// Get students in a class
+const getClassStudents = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [students] = await pool.execute(
+      `SELECT s.id, s.initials, s.first_name, s.last_name, s.image, 
+              s.guardian_parent_name, s.guardian_type, s.contact_no, s.address,
+              u.username, u.email
+       FROM students s
+       LEFT JOIN users u ON s.user_id = u.id
+       WHERE s.class_id = ?
+       ORDER BY s.first_name, s.last_name`,
+      [id]
+    );
+
+    res.json(students);
+  } catch (error) {
+    console.error('Get class students error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Update student count for a class
 const updateStudentCount = async (classId) => {
   try {
     const [students] = await pool.execute(
-      'SELECT COUNT(*) as count FROM students WHERE class_id = ?',
+      'SELECT COUNT(*) as count FROM students WHERE class_id = ? AND user_id IS NOT NULL',
       [classId]
     );
 
@@ -231,6 +248,7 @@ module.exports = {
   getClassById,
   updateClass,
   deleteClass,
+  getClassStudents,
   updateStudentCount
 };
 

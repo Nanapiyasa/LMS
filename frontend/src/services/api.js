@@ -77,6 +77,21 @@ export const authAPI = {
     return data;
   },
 
+  // Register teacher (supports FormData including profile picture)
+  registerTeacher: async (formData) => {
+    const data = await apiRequest('/auth/register', {
+      method: 'POST',
+      body: formData,
+      headers: {}, // let browser set Content-Type for FormData
+    });
+
+    if (data.token) {
+      setToken(data.token);
+    }
+
+    return data;
+  },
+
   logout: () => {
     removeToken();
   },

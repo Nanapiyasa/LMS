@@ -5,6 +5,7 @@
     "dotenv": "^17.2.3",
     "lucide-react": "^0.560.0",
     "mysql2": "^2.3.3",
+    "qrcode": "^1.5.4",
     "recharts": "^3.5.1"
   }
 }

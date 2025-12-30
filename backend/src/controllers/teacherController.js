@@ -142,22 +142,28 @@ const signup = async (req, res) => {
   });
 };
 
-// Get all teachers
+// Get all teachers (from new schema: users + teachers tables)
 const getAllTeachers = async (req, res) => {
   try {
     const [teachers] = await pool.execute(
       `SELECT 
-         teacher_id,
-         initials,
-         first_name,
-         last_name,
-         CONCAT(first_name, ' ', last_name) AS full_name,
-         image_base64 AS image,
-         email,
-         mobile_no,
-         created_at
-       FROM teachers 
-       ORDER BY first_name, last_name`
+         t.id,
+         u.id as user_id,
+         t.initials,
+         t.first_name,
+         t.last_name,
+         CONCAT(t.first_name, ' ', t.last_name) AS full_name,
+         t.profile_picture,
+         u.email,
+         u.username,
+         t.address,
+         u.role,
+         u.is_active,
+         t.is_admin,
+         u.created_at
+       FROM teachers t
+       JOIN users u ON t.user_id = u.id
+       ORDER BY t.first_name, t.last_name`
     );
 
     res.json(teachers);
@@ -174,17 +180,22 @@ const getTeacherById = async (req, res) => {
 
     const [teachers] = await pool.execute(
       `SELECT 
-         teacher_id,
-         initials,
-         first_name,
-         last_name,
-         image_base64 AS image,
-         address,
-         mobile_no,
-         email,
-         created_at
-       FROM teachers 
-       WHERE teacher_id = ?`,
+         t.id,
+         u.id as user_id,
+         t.initials,
+         t.first_name,
+         t.last_name,
+         t.profile_picture,
+         t.address,
+         u.email,
+         u.username,
+         u.role,
+         u.is_active,
+         t.is_admin,
+         u.created_at
+       FROM teachers t
+       JOIN users u ON t.user_id = u.id
+       WHERE t.id = ?`,
       [id]
     );
 

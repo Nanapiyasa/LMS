@@ -17,45 +17,84 @@ const verifyToken = async (req, res, next) => {
       process.env.JWT_SECRET || 'your-secret-key-change-this'
     );
 
-    // From your generateToken: payload is { teacherId, email, role }
-    const teacherId = decoded.teacherId;
-    if (!teacherId) {
+    // From your generateToken: payload is { userId, email, role }
+    const userId = decoded.userId;
+    if (!userId) {
       return res.status(401).json({ error: 'Invalid token payload' });
     }
 
-    // Fetch teacher from database
-    const [teachers] = await pool.execute(
+    // Fetch user from database
+    const [users] = await pool.execute(
       `SELECT 
-         teacher_id,
+         id,
          email,
          username,
-         first_name,
-         last_name,
-         initials,
-         mobile_no,
-         role 
-       FROM teachers 
-       WHERE teacher_id = ?`,
-      [teacherId]
+         role,
+         is_active
+       FROM users 
+       WHERE id = ?`,
+      [userId]
     );
 
-    if (teachers.length === 0) {
+    if (users.length === 0) {
       return res.status(403).json({ error: 'User not found' });
     }
 
-    const teacher = teachers[0];
+    const user = users[0];
 
-    // Attach to req.user (you can customize what you include)
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'User account is inactive' });
+    }
+
+    // Attach to req.user
     req.user = {
-      teacherId: teacher.teacher_id,
-      email: teacher.email,
-      username: teacher.username,
-      firstName: teacher.first_name,
-      lastName: teacher.last_name,
-      initials: teacher.initials,
-      mobileNo: teacher.mobile_no,
-      role: teacher.role || 'teacher'  // fallback if column is NULL
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role
     };
+
+    // Fetch additional data based on role
+    if (user.role === 'teacher' || user.role === 'admin') {
+      const [teachers] = await pool.execute(
+        `SELECT id, initials, first_name, last_name, address, profile_picture, is_admin
+         FROM teachers WHERE user_id = ?`,
+        [userId]
+      );
+
+      if (teachers.length > 0) {
+        const teacher = teachers[0];
+        req.user = {
+          ...req.user,
+          teacherId: teacher.id,
+          firstName: teacher.first_name,
+          lastName: teacher.last_name,
+          initials: teacher.initials,
+          address: teacher.address,
+          is_admin: teacher.is_admin
+        };
+      }
+    }
+
+    if (user.role === 'student') {
+      const [students] = await pool.execute(
+        `SELECT id, initials, first_name, last_name, address, class_id
+         FROM students WHERE user_id = ?`,
+        [userId]
+      );
+
+      if (students.length > 0) {
+        const student = students[0];
+        req.user = {
+          ...req.user,
+          studentId: student.id,
+          firstName: student.first_name,
+          lastName: student.last_name,
+          initials: student.initials,
+          class_id: student.class_id
+        };
+      }
+    }
 
     next();
   } catch (error) {
@@ -72,17 +111,26 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-// Role-based authorization (optional, for future use if you add admin/student roles)
+// Role-based authorization middleware
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: insufficient role' });
+      return res.status(403).json({ error: 'Access denied: insufficient permissions' });
     }
     next();
   };
 };
 
+// Admin-only middleware
+const requireAdmin = (req, res, next) => {
+  if (!req.user || (req.user.role !== 'admin' && !req.user.is_admin)) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
 module.exports = {
   verifyToken,
-  authorizeRoles
+  authorizeRoles,
+  requireAdmin
 };

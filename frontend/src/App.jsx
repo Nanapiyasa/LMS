@@ -7,7 +7,7 @@ import Login from "./pages/Login";
 import TeacherDashboard from "./pages/TeacherDashboard/TeacherDashboard";
 import Classes from "./pages/TeacherDashboard/Classes";
 import Students from "./pages/TeacherDashboard/Students";
-import TeacherSignup from "./pages/Login";
+import TeacherSignup from "./pages/TeacherSignup";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import CSSDebugTest from "./pages/CSSDebugTest";
