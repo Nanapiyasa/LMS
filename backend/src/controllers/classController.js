@@ -5,7 +5,7 @@ const safe = (value) => (value === undefined ? null : value);
 // Create a new class (Admin only)
 const createClass = async (req, res) => {
   try {
-    const { class_name, teacher_id } = req.body;
+    const { class_name, teacher_id, student_count } = req.body;
 
     if (!class_name || !teacher_id) {
       return res.status(400).json({ error: 'Class name and Teacher ID are required' });
@@ -22,11 +22,12 @@ const createClass = async (req, res) => {
     }
 
     const teacher = teachers[0];
+    const count = student_count !== undefined ? parseInt(student_count) : 0;
 
     // Insert class
     const [result] = await pool.execute(
-      'INSERT INTO classes (class_name, teacher_id, student_count, is_active) VALUES (?, ?, 0, TRUE)',
-      [safe(class_name), safe(teacher_id)]
+      'INSERT INTO classes (class_name, teacher_id, student_count, is_active) VALUES (?, ?, ?, TRUE)',
+      [safe(class_name), safe(teacher_id), count]
     );
 
     res.status(201).json({
@@ -36,7 +37,7 @@ const createClass = async (req, res) => {
         class_name,
         teacher_id,
         teacher_name: `${teacher.first_name} ${teacher.last_name}`,
-        student_count: 0,
+        student_count: count,
         is_active: true,
         created_at: new Date()
       }
@@ -98,7 +99,7 @@ const getClassById = async (req, res) => {
 const updateClass = async (req, res) => {
   try {
     const { id } = req.params;
-    const { class_name, teacher_id } = req.body;
+    const { class_name, teacher_id, student_count } = req.body;
 
     // Check if class exists
     const [existingClasses] = await pool.execute(
@@ -136,12 +137,17 @@ const updateClass = async (req, res) => {
       values.push(teacher_id);
     }
 
+    if (student_count !== undefined) {
+      updates.push('student_count = ?');
+      values.push(parseInt(student_count));
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
 
     updates.push('updated_at = NOW()');
-    values.push(id);
+    values.push(id);  // Push ID as the last value for the WHERE clause
 
     await pool.execute(
       `UPDATE classes SET ${updates.join(', ')} WHERE id = ?`,

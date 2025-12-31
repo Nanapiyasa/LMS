@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, BarChart3, FileText, Users, Home, LogOut } from 'lucide-react';
+import { BookOpen, BarChart3, FileText, Users, Home, LogOut, Settings } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Sidebar() {
+  const { userRole } = useAuth();
+  const isAdmin = userRole === 'admin';
+
   return (
     <div className="w-64 bg-white shadow-sm">
       <div className="p-6">
@@ -30,10 +34,20 @@ export default function Sidebar() {
             <FileText className="w-5 h-5" />
             Classes
           </Link>
-          <Link to="/teacher/signup" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
-            <Users className="w-5 h-5" />
-            Register Teacher
-          </Link>
+          
+          {/* Admin-only menu items */}
+          {isAdmin && (
+            <>
+              <Link to="/teacher/signup" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                <Users className="w-5 h-5" />
+                Register Teacher
+              </Link>
+              <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                <Settings className="w-5 h-5" />
+                Admin Settings
+              </a>
+            </>
+          )}
         </nav>
 
         <div className="mt-12">

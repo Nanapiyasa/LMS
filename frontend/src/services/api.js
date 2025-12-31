@@ -20,16 +20,19 @@ const removeToken = () => {
 const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();
   
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-    ...options,
+  // Merge headers so callers passing `options.headers` don't overwrite auth header
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...options.headers,
   };
 
-  // Remove Content-Type for FormData
+  const config = {
+    ...options,
+    headers,
+  };
+
+  // Remove Content-Type for FormData so browser sets correct boundary
   if (options.body instanceof FormData) {
     delete config.headers['Content-Type'];
   }
@@ -123,6 +126,14 @@ export const teacherAPI = {
 
   getTeacherById: async (id) => {
     return await apiRequest(`/teachers/${id}`);
+  },
+
+  updateTeacher: async (id, formData) => {
+    return await apiRequest(`/teachers/${id}`, {
+      method: 'PUT',
+      body: formData,
+      headers: {}, // Let browser set Content-Type for FormData
+    });
   },
 };
 

@@ -8,7 +8,6 @@ import TeacherDashboard from "./pages/TeacherDashboard/TeacherDashboard";
 import Classes from "./pages/TeacherDashboard/Classes";
 import Students from "./pages/TeacherDashboard/Students";
 import TeacherSignup from "./pages/TeacherSignup";
-import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import CSSDebugTest from "./pages/CSSDebugTest";
 
@@ -21,7 +20,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/teacher/signup" element={<TeacherSignup />} />
 
-          {/* Protected routes */}
+          {/* Protected routes - Both teacher and admin use same dashboard */}
           <Route
             path="/profile"
             element={
@@ -34,7 +33,7 @@ function App() {
           <Route
             path="/teacher/*"
             element={
-              <ProtectedRoute requiredRole="teacher">
+              <ProtectedRoute requiredRole={["teacher", "admin"]}>
                 <Routes>
                   <Route path="" element={<TeacherDashboard />} />
                   <Route path="classes" element={<Classes />} />
@@ -43,11 +42,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Admin route redirects to teacher dashboard */}
           <Route
             path="/admin/*"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
+                <Routes>
+                  <Route path="" element={<TeacherDashboard />} />
+                  <Route path="classes" element={<Classes />} />
+                  <Route path="students" element={<Students />} />
+                </Routes>
               </ProtectedRoute>
             }
           />

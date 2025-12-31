@@ -210,9 +210,149 @@ const getTeacherById = async (req, res) => {
   }
 };
 
+// Update teacher
+const updateTeacher = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    try {
+      const { id } = req.params;
+      const {
+        initials,
+        first_name,
+        last_name,
+        address,
+        email,
+        username
+      } = req.body;
+
+      // Check if teacher exists
+      const [existingTeacher] = await pool.execute(
+        `SELECT t.id, u.id as user_id 
+         FROM teachers t
+         JOIN users u ON t.user_id = u.id
+         WHERE t.id = ?`,
+        [id]
+      );
+
+      if (existingTeacher.length === 0) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(404).json({ error: 'Teacher not found' });
+      }
+
+      const userId = existingTeacher[0].user_id;
+
+      // Check for duplicate email (excluding current teacher)
+      if (email) {
+        const [duplicateEmail] = await pool.execute(
+          `SELECT id FROM users WHERE email = ? AND id != ?`,
+          [email, userId]
+        );
+        if (duplicateEmail.length > 0) {
+          if (req.file) fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'Email already in use' });
+        }
+      }
+
+      // Check for duplicate username (excluding current teacher)
+      if (username) {
+        const [duplicateUsername] = await pool.execute(
+          `SELECT id FROM users WHERE username = ? AND id != ?`,
+          [username, userId]
+        );
+        if (duplicateUsername.length > 0) {
+          if (req.file) fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'Username already in use' });
+        }
+      }
+
+      const connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        // Update teachers table
+        const updates = [];
+        const values = [];
+
+        if (initials !== undefined) { updates.push('initials = ?'); values.push(initials); }
+        if (first_name !== undefined) { updates.push('first_name = ?'); values.push(first_name); }
+        if (last_name !== undefined) { updates.push('last_name = ?'); values.push(last_name); }
+        if (address !== undefined) { updates.push('address = ?'); values.push(address); }
+        if (req.file) { updates.push('profile_picture = ?'); values.push(req.file.buffer); }
+
+        if (updates.length > 0) {
+          values.push(id);
+          const updateQuery = `UPDATE teachers SET ${updates.join(', ')} WHERE id = ?`;
+          await connection.execute(updateQuery, values);
+        }
+
+        // Update users table if needed
+        const userUpdates = [];
+        const userValues = [];
+
+        if (email !== undefined) { userUpdates.push('email = ?'); userValues.push(email); }
+        if (username !== undefined) { userUpdates.push('username = ?'); userValues.push(username); }
+
+        if (userUpdates.length > 0) {
+          userValues.push(userId);
+          const updateUserQuery = `UPDATE users SET ${userUpdates.join(', ')} WHERE id = ?`;
+          await connection.execute(updateUserQuery, userValues);
+        }
+
+        await connection.commit();
+        connection.release();
+
+        // Fetch updated teacher
+        const [updatedTeacher] = await pool.execute(
+          `SELECT 
+             t.id,
+             u.id as user_id,
+             t.initials,
+             t.first_name,
+             t.last_name,
+             t.profile_picture,
+             t.address,
+             u.email,
+             u.username,
+             u.role,
+             u.is_active,
+             t.is_admin,
+             u.created_at
+           FROM teachers t
+           JOIN users u ON t.user_id = u.id
+           WHERE t.id = ?`,
+          [id]
+        );
+
+        res.json({
+          message: 'Teacher updated successfully',
+          teacher: updatedTeacher[0]
+        });
+
+      } catch (err) {
+        await connection.rollback();
+        connection.release();
+        throw err;
+      }
+
+    } catch (error) {
+      if (req.file) {
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error('Failed to delete uploaded file:', err);
+        });
+      }
+      console.error('Update teacher error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+};
+
 module.exports = {
   signup,
   getAllTeachers,
   getTeacherById,
+  updateTeacher,
   upload // exported in case you need middleware access elsewhere
 };

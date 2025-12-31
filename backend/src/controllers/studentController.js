@@ -51,6 +51,14 @@ const createStudent = async (req, res) => {
     try {
       const { initials, first_name, last_name, guardian_parent_name, guardian_type, contact_no, address, class_id, teacher_id, username, password } = req.body;
       const image = req.file ? `/uploads/students/${req.file.filename}` : null;
+      
+      // Only admins may create students
+      const userRole = req.user?.role;
+      if (userRole !== 'admin') {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(403).json({ error: 'Admin access required to create students' });
+      }
+      
       if (!first_name || !last_name || !guardian_parent_name || !contact_no || !address || !username || !password) {
         if (req.file) fs.unlinkSync(req.file.path);
         return res.status(400).json({ error: 'All required fields must be filled' });
@@ -121,9 +129,21 @@ const updateStudent = async (req, res) => {
       const { id } = req.params;
       const { initials, first_name, last_name, guardian_parent_name, guardian_type, contact_no, address, class_id, teacher_id } = req.body;
       const image = req.file ? `/uploads/students/${req.file.filename}` : null;
-      const [existingStudents] = await pool.execute('SELECT id, image, class_id FROM students WHERE id = ?', [id]);
+      
+      const [existingStudents] = await pool.execute('SELECT id, image, class_id, teacher_id FROM students WHERE id = ?', [id]);
       if (existingStudents.length === 0) { if (req.file) fs.unlinkSync(req.file.path); return res.status(404).json({ error: 'Student not found' }); }
-      const oldImage = existingStudents[0].image; const oldClassId = existingStudents[0].class_id;
+      
+      // Authorization check: Teachers can only update students they teach
+      const userRole = req.user?.role;
+      const userTeacherId = req.user?.teacherId;
+      const studentTeacherId = existingStudents[0].teacher_id;
+      if (userRole === 'teacher' && studentTeacherId && studentTeacherId !== userTeacherId) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(403).json({ error: 'Teachers can only update their own students' });
+      }
+      
+      const oldImage = existingStudents[0].image; 
+      const oldClassId = existingStudents[0].class_id;
       if (class_id) { const [classes] = await pool.execute('SELECT id FROM classes WHERE id = ? AND is_active = TRUE', [class_id]); if (classes.length === 0) { if (req.file) fs.unlinkSync(req.file.path); return res.status(404).json({ error: 'Class not found' }); } }
       if (teacher_id) { const [teachers] = await pool.execute('SELECT id FROM teachers WHERE id = ?', [teacher_id]); if (teachers.length === 0) { if (req.file) fs.unlinkSync(req.file.path); return res.status(404).json({ error: 'Teacher not found' }); } }
       const updates = []; const values = [];
@@ -150,9 +170,18 @@ const updateStudent = async (req, res) => {
 const deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;
-    const [students] = await pool.execute('SELECT id, class_id, image, user_id FROM students WHERE id = ?', [id]);
+    const [students] = await pool.execute('SELECT id, class_id, image, user_id, teacher_id FROM students WHERE id = ?', [id]);
     if (students.length === 0) return res.status(404).json({ error: 'Student not found' });
-    const studentClassId = students[0].class_id; const image = students[0].image; const user_id = students[0].user_id;
+    
+    // Only admins may delete students
+    const userRole = req.user?.role;
+    if (userRole !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required to delete students' });
+    }
+    
+    const studentClassId = students[0].class_id; 
+    const image = students[0].image; 
+    const user_id = students[0].user_id;
     const connection = await pool.getConnection(); await connection.beginTransaction();
     try {
       await connection.execute('DELETE FROM students WHERE id = ?', [id]);

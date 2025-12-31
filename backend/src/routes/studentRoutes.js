@@ -10,9 +10,9 @@ router.use(verifyToken);
 router.get('/', getAllStudents);
 router.get('/:id', getStudentById);
 
-// Admin-only routes
+// Admin-only for create and delete; teachers can update their students
 router.post('/', requireAdmin, createStudent);
-router.put('/:id', requireAdmin, updateStudent);
+router.put('/:id', updateStudent);
 router.delete('/:id', requireAdmin, deleteStudent);
 
 module.exports = router;
