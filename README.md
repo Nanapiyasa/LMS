@@ -1,6 +1,6 @@
 # LMS - Learning Management System
 
-A comprehensive Learning Management System for the MJF Charity Foundation, designed to facilitate educational management and delivery for students, teachers, administrators, and parents.
+A comprehensive Learning Management System for the MJF Charity Foundation, designed to facilitate educational management and delivery for teachers and administrators.
 
 #Architecture
 
