@@ -2,7 +2,11 @@
 
 A comprehensive Learning Management System for the MJF Charity Foundation, designed to facilitate educational management and delivery for students, teachers, administrators, and parents.
 
-## 🚀 Features
+#Architecture
+
+<img width="1413" height="676" alt="image" src="https://github.com/user-attachments/assets/1981ecce-f96d-4f79-9f34-116729e0a0be" />
+
+## Features
 
 ### Multi-Role System
 - **Teachers**: manage exams, track student's progress
@@ -17,7 +21,7 @@ A comprehensive Learning Management System for the MJF Charity Foundation, desig
 - Progress tracking and analytics
 - QR code generation for easy access
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 19.1.1** - Modern React with latest features
@@ -41,7 +45,7 @@ A comprehensive Learning Management System for the MJF Charity Foundation, desig
 - **PostCSS** - CSS processing
 - **Nodemon** - Development auto-restart
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 LMS/
@@ -67,7 +71,7 @@ LMS/
 └── package.json           # Root dependencies
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -184,7 +188,7 @@ LMS/
 
 For detailed migration instructions from Firebase to Supabase, refer to the [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md).
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
