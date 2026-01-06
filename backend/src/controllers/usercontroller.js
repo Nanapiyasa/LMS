@@ -1,94 +1,113 @@
-const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const { pool } = require('../config/database');
 
-// @desc    Register new user
-// @route   POST /api/users/register
-// @access  Public
-const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
+// Get user profile by ID
+const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.uid;
 
-  if (!name || !email || !password) {
-    res.status(400);
-    throw new Error("Please include all fields");
+    const [users] = await pool.execute(
+      'SELECT id, email, name, role, created_at, updated_at FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(users[0]);
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
+};
 
-  const userExists = await User.findOne({ email });
+// Update user profile
+const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, email } = req.body;
 
-  if (userExists) {
-    res.status(400);
-    throw new Error("User already exists");
-  }
+    const updates = [];
+    const values = [];
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    if (name !== undefined) {
+      updates.push('name = ?');
+      values.push(name);
+    }
 
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    role,
-  });
+    if (email !== undefined) {
+      // Check if email already exists
+      const [existingUsers] = await pool.execute(
+        'SELECT id FROM users WHERE email = ? AND id != ?',
+        [email, userId]
+      );
 
-  if (user) {
-    res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("Invalid user data");
-  }
-});
+      if (existingUsers.length > 0) {
+        return res.status(400).json({ error: 'Email already in use' });
+      }
 
-// @desc    Authenticate user & get token
-// @route   POST /api/users/login
-// @access  Public
-const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+      updates.push('email = ?');
+      values.push(email);
+    }
 
-  const user = await User.findOne({ email });
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
 
-  if (user && (await bcrypt.compare(password, user.password))) {
+    updates.push('updated_at = NOW()');
+    values.push(userId);
+
+    const updateQuery = 'UPDATE users SET ' + updates.join(', ') + ' WHERE id = ?';
+    await pool.execute(updateQuery, values);
+
+    // Get updated user
+    const [users] = await pool.execute(
+      'SELECT id, email, name, role, created_at, updated_at FROM users WHERE id = ?',
+      [userId]
+    );
+
     res.json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user._id),
+      message: 'Profile updated successfully',
+      user: users[0]
     });
-  } else {
-    res.status(401);
-    throw new Error("Invalid credentials");
+  } catch (error) {
+    console.error('Update user profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+};
 
-// @desc    Get user profile
-// @route   GET /api/users/me
-// @access  Private
-const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
+// Get all users (admin only)
+const getAllUsers = async (req, res) => {
+  try {
+    const [users] = await pool.execute(
+      'SELECT id, email, name, role, created_at, updated_at FROM users ORDER BY created_at DESC'
+    );
 
-  res.status(200).json({
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  });
-});
-
-// Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "30d",
-  });
+    res.json(users);
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 module.exports = {
-  registerUser,
-  loginUser,
-  getMe,
+  getUserProfile,
+  updateUserProfile,
+  getAllUsers
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

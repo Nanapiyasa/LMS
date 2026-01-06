@@ -5,13 +5,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
 import TeacherDashboard from "./pages/TeacherDashboard/TeacherDashboard";
-import StudentDashboard from "./pages/StudentDashboard";
-import LifeSkills from "./pages/LifeSkills/LifeSkills";
-import JobRoleSimulation from "./pages/JobRoleSimulation/JobRoleSimulation";
-import CommunicationSocial from "./pages/CommunicationSocial/CommunicationSocial";
-import BehaviourEmotional from "./pages/BehaviourEmotional/Level_1_Colour_My_Mood";
-import ParentDashboard from "./pages/ParentDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import Classes from "./pages/TeacherDashboard/Classes";
+import Students from "./pages/TeacherDashboard/Students";
+import TeacherSignup from "./pages/TeacherSignup";
 import Profile from "./pages/Profile";
 import CSSDebugTest from "./pages/CSSDebugTest";
 
@@ -22,8 +18,9 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/teacher/signup" element={<TeacherSignup />} />
 
-          {/* Protected routes */}
+          {/* Protected routes - Both teacher and admin use same dashboard */}
           <Route
             path="/profile"
             element={
@@ -34,49 +31,27 @@ function App() {
           />
           <Route path="/css-debug" element={<CSSDebugTest />} />
           <Route
-            path="/student/*"
+            path="/teacher/*"
             element={
-              <ProtectedRoute requiredRole="student">
+              <ProtectedRoute requiredRole={["teacher", "admin"]}>
                 <Routes>
-                  <Route path="" element={<StudentDashboard />} />
-                  <Route path="life-skills" element={<LifeSkills />} />
-                  <Route
-                    path="job-role-simulation"
-                    element={<JobRoleSimulation />}
-                  />
-                  <Route
-                    path="communication-social"
-                    element={<CommunicationSocial />}
-                  />
-                  <Route
-                    path="behaviour-emotional"
-                    element={<BehaviourEmotional />}
-                  />
+                  <Route path="" element={<TeacherDashboard />} />
+                  <Route path="classes" element={<Classes />} />
+                  <Route path="students" element={<Students />} />
                 </Routes>
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/teacher/*"
-            element={
-              <ProtectedRoute requiredRole="teacher">
-                <TeacherDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/parent/*"
-            element={
-              <ProtectedRoute requiredRole="parent">
-                <ParentDashboard />
-              </ProtectedRoute>
-            }
-          />
+          {/* Admin route redirects to teacher dashboard */}
           <Route
             path="/admin/*"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
+                <Routes>
+                  <Route path="" element={<TeacherDashboard />} />
+                  <Route path="classes" element={<Classes />} />
+                  <Route path="students" element={<Students />} />
+                </Routes>
               </ProtectedRoute>
             }
           />
@@ -86,7 +61,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <StudentDashboard />
+                <TeacherDashboard />
               </ProtectedRoute>
             }
           />
@@ -94,7 +69,7 @@ function App() {
             path="*"
             element={
               <ProtectedRoute>
-                <StudentDashboard />
+                <TeacherDashboard />
               </ProtectedRoute>
             }
           />

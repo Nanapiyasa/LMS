@@ -99,4 +99,17 @@
   #root {
     min-height: 100vh;
   }
+
+  /* Ensure form text color is visible in both light and dark themes */
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground));
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
 }

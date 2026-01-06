@@ -1,26 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../supabaseConfig";
-import { getUserData, updateUserProfile } from "../utils/supabaseHelpers";
+import { useAuth } from "../contexts/AuthContext";
+import { userAPI } from "../services/api";
 import DashboardLayout from "../components/DashboardLayout";
 import UserMenu from "../components/UserMenu";
 
 export default function Profile() {
-  const [user, setUser] = useState(null);
+  const { user, userData } = useAuth();
   const [profile, setProfile] = useState({ name: "", email: "", role: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        const data = await getUserData(user.id);
-        if (data) setProfile({ name: data.name || "", email: data.email || user.email || "", role: data.role || "" });
-      }
-    };
-    init();
-  }, []);
+    if (userData) {
+      setProfile({ 
+        name: userData.name || "", 
+        email: userData.email || "", 
+        role: userData.role || "" 
+      });
+    }
+  }, [userData]);
 
   const onSave = async (e) => {
     e.preventDefault();
@@ -28,8 +26,8 @@ export default function Profile() {
     try {
       setSaving(true);
       setMessage("");
-      const updated = await updateUserProfile(user.id, { name: profile.name, email: profile.email });
-      setProfile((p) => ({ ...p, name: updated.name, email: updated.email }));
+      const updated = await userAPI.updateUserProfile({ name: profile.name, email: profile.email });
+      setProfile((p) => ({ ...p, name: updated.user.name, email: updated.user.email }));
       setMessage("Profile updated successfully");
     } catch (e) {
       setMessage(e.message || "Failed to update profile");

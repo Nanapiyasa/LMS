@@ -5,8 +5,8 @@ const cors = require("cors");
 // Load env vars
 dotenv.config();
 
-// Initialize Supabase
-const { supabase } = require("./config/supabase");
+// Initialize database connection
+const { testConnection } = require("./config/database");
 
 const app = express();
 
@@ -18,9 +18,18 @@ app.get("/", (req, res) => {
 // Middleware
 app.use(cors());
 app.use(express.json());
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve uploaded files
 
 // Routes
+app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/teachers", require("./routes/teacherRoutes"));
+app.use("/api/classes", require("./routes/classRoutes"));
+app.use("/api/students", require("./routes/studentRoutes"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  await testConnection();
+});

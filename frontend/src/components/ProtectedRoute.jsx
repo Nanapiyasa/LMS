@@ -27,16 +27,20 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   // Check role-based access if required
-  if (requiredRole && userRole !== requiredRole) {
-    // Redirect to appropriate dashboard based on user's actual role
-    switch (userRole) {
-      case 'admin':
-        return <Navigate to="/admin" replace />;
-      case 'teacher':
-        return <Navigate to="/teacher" replace />;
-      case 'student':
-      default:
-        return <Navigate to="/student" replace />;
+  if (requiredRole) {
+    // Support both single role string and array of roles
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    if (!allowedRoles.includes(userRole)) {
+      // Redirect to appropriate dashboard based on user's actual role
+      switch (userRole) {
+        case 'admin':
+          return <Navigate to="/admin" replace />;
+        case 'teacher':
+          return <Navigate to="/teacher" replace />;
+        default:
+          return <Navigate to="/teacher" replace />;
+      }
     }
   }
 
