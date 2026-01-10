@@ -18,6 +18,7 @@ Unlike traditional LMS platforms that provide only retrospective reports, this s
 - Early intervention indicators for teachers
 - Data-driven teacher dashboards
 - Caregiver–teacher collaboration support
+
 The platform transforms passive monitoring into proactive intervention, especially for learners with neurodiverse needs.
 
 ## System Architecture
@@ -26,15 +27,15 @@ The platform transforms passive monitoring into proactive intervention, especial
 - Database Layer – Secure storage of student progress & behavioral logs
 - AI & Analytics Module – Predictive analysis and early-warning generation
 
-### Key Features
-## AI-Powered Student Progress Monitoring
+## Key Features
+### AI-Powered Student Progress Monitoring
 - Live progress analytics
 - Engagement duration tracking
 - Behavioral pattern analysis
 - Progress trends visualization
 - AI-based early intervention indicators
 
-## Teacher Analytics Dashboard
+### Teacher Analytics Dashboard
 - Real-time student activity visualization
 - AI-generated engagement predictions
 - Attention decline & learning fatigue alerts
