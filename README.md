@@ -1,5 +1,8 @@
 # LMS - Learning Management System
 
+This Learning Management System (LMS) is a research-driven, AI-powered educational platform developed to support inclusive education, with a special focus on secondary-level students with Down syndrome.
+The system enables real-time progress monitoring, predictive analytics, and early intervention through a web-based teacher dashboard and secure backend services.
+
 A comprehensive Learning Management System for the MJF Charity Foundation, designed to facilitate educational management and delivery for teachers and administrators.
 
 #Architecture
@@ -8,22 +11,44 @@ A comprehensive Learning Management System for the MJF Charity Foundation, desig
 
 ## Features
 
-## AI-Powered Student Progress Monitoring
-- Live Progress Analytics
-- Skill Assessment Overview
-- Engagement Tracking
-- Intervention Indicators
-- Progress Trends
+## Project Focus & Novelty
+Unlike traditional LMS platforms that provide only retrospective reports, this system introduces:
+- Real-time behavioral and engagement tracking
+- AI-based prediction of attention decline and learning fatigue
+- Early intervention indicators for teachers
+- Data-driven teacher dashboards
+- Caregiver–teacher collaboration support
+The platform transforms passive monitoring into proactive intervention, especially for learners with neurodiverse needs.
 
+## System Architecture
+- Frontend (Web App) – Teacher dashboard & analytics
+- Backend (API Layer) – Data processing, authentication, AI integration
+- Database Layer – Secure storage of student progress & behavioral logs
+- AI & Analytics Module – Predictive analysis and early-warning generation
+
+### Key Features
+## AI-Powered Student Progress Monitoring
+- Live progress analytics
+- Engagement duration tracking
+- Behavioral pattern analysis
+- Progress trends visualization
+- AI-based early intervention indicators
+
+## Teacher Analytics Dashboard
+- Real-time student activity visualization
+- AI-generated engagement predictions
+- Attention decline & learning fatigue alerts
+- Data-driven decision support for interventions
+  
 ### Multi-Role System
-- **Teachers**: manage exams, track student's progress
-- **Administrators**: Oversee system operations, manage users
+- **Teachers**: Monitor student progress, View analytics & alerts, Manage exams and assessments
+- **Administrators**: User and system management, Role-based access control
 
 
 ### Core Functionality
-- student's management and enrollment
-- Exam creation 
-- User authentication and authorization
+- Student management and enrollment
+- Exam creation and management 
+- Secure authentication & authorization
 - File upload and management
 - Progress tracking and analytics
 - QR code generation for easy access
