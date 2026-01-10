@@ -8,6 +8,13 @@ A comprehensive Learning Management System for the MJF Charity Foundation, desig
 
 ## Features
 
+## AI-Powered Student Progress Monitoring
+-Live Progress Analytics
+-Skill Assessment Overview
+-Engagement Tracking
+-Intervention Indicators
+-Progress Trends
+
 ### Multi-Role System
 - **Teachers**: manage exams, track student's progress
 - **Administrators**: Oversee system operations, manage users
