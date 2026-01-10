@@ -11,7 +11,7 @@ A comprehensive Learning Management System for the MJF Charity Foundation, desig
 
 ## Project Focus & Novelty
 Unlike traditional LMS platforms that provide only retrospective reports, this system introduces:
-- Real-time behavioral and engagement tracking
+- Real-time behavioral and engagement tracking via gamified apps and IoT heart rate monitoring
 - AI-based prediction of attention decline and learning fatigue
 - Early intervention indicators for teachers
 - Data-driven teacher dashboards
