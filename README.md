@@ -9,8 +9,6 @@ A comprehensive Learning Management System for the MJF Charity Foundation, desig
 
 <img width="1413" height="676" alt="image" src="https://github.com/user-attachments/assets/1981ecce-f96d-4f79-9f34-116729e0a0be" />
 
-## Features
-
 ## Project Focus & Novelty
 Unlike traditional LMS platforms that provide only retrospective reports, this system introduces:
 - Real-time behavioral and engagement tracking
